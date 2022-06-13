@@ -2,7 +2,28 @@
 options(timeout = 100000)
 
 # Download data ----------------------------------------------------------------
+## SNVs
 download.file(
-  url = "https://tcga-xena-hub.s3.us-east-1.amazonaws.com/download/TCGA.GBM.sampleMap%2FHiSeqV2.gz",
-  destfile = "data/_raw/TCGA.GBM.sampleMap-HiSeqV2.gz"
+  url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.mutect2_snv.tsv.gz",
+  destfile = "data/_raw/TCGA-SKCM.mutect2_snv.tsv.gz"
 )
+
+## Methylation
+download.file(
+  url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.methylation450.tsv.gz",
+  destfile = "data/_raw/TCGA-SKCM.methylation450.tsv.gz"
+)
+
+## Counts
+download.file(
+  url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.htseq_counts.tsv.gz",
+  destfile = "data/_raw/TCGA-SKCM.htseq_counts.tsv.gz"
+)
+
+## CNVs
+download.file(
+  url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.masked_cnv.tsv.gz",
+  destfile = "data/_raw/TCGA-SKCM.masked_cnv.tsv.gz"
+)
+
+
