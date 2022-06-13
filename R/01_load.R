@@ -37,5 +37,3 @@ download.file(
   url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.survival.tsv",
   destfile = "data/_raw/TCGA-SKCM.survival.tsv"
 )
-
-
