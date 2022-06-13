@@ -36,3 +36,7 @@ counts
 ### Phenotype
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
 pheno
+
+### Methylation
+#methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
+
