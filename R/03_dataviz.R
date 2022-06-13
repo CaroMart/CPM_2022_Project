@@ -59,7 +59,7 @@ count_data <- count_data[,2:473]
 count_data <- sapply(count_data, as.numeric)
 View(head(count_data))
 
-gbm_expr_cpm <- apply(head(count_data), 2, function(x) x/sum(x)*1000000)
+gbm_expr_cpm <- apply(count_data, 2, function(x) x/sum(x)*1000000)
 
 pheno_data[,submitted_tumor_location]
 pheno_data <- pheno_data[pheno_data$submitted_tumor_location != '',]
@@ -67,11 +67,40 @@ pheno_data
 
 colnames(pheno_data)
 
-colnames(gbm_expr_cpm)
-colnames(pheno_data)
 
+pheno_data$submitter_id.samples 
 
-gbm_expr_cpm[, colnames(gbm_expr_cpm) %in% pheno_data$submitter_id.samples]
+pheno_data
+
+gbm_expr_cpm_filtered <- gbm_expr_cpm[, str_replace_all(colnames(gbm_expr_cpm), "\\.", "-") %in% pheno_data$submitter_id.samples]
+pheno_data_filtered <- pheno_data[pheno_data$submitter_id.samples %in% str_replace_all(colnames(gbm_expr_cpm_filtered), "\\.", "-"),]
 
 count_data_tibble <- as_tibble(count_data)
 
+gbm_expr_cpm_filtered
+
+colnames(pheno)
+
+pheno_data_filtered$submitter_id.samples == str_replace_all(colnames(gbm_expr_cpm_filtered), "\\.", "-")
+order(pheno_data_filtered$submitter_id.samples)
+str_replace_all(colnames(gbm_expr_cpm_filtered), "\\.", "-")
+
+pheno_sort <- pheno_data_filtered[order(pheno_data_filtered$submitter_id.samples),]
+pheno_sort$submitter_id.samples
+expr_sort <- gbm_expr_cpm_filtered[, order(colnames(gbm_expr_cpm_filtered))]
+expr_sort
+
+dim(gbm_expr_cpm_filtered)
+dim(pheno_data_filtered)
+
+pca <- prcomp(t(expr_sort))
+
+pca %>% broom::tidy(matrix = "eigenvalues")
+
+pca %>% broom::augment((pheno_sort)) %>% 
+  ggplot(mapping = aes(
+  x = .fittedPC1,
+  y = .fittedPC2,
+  color = submitted_tumor_location)) +
+  geom_point() +
+  stat_ellipse()
