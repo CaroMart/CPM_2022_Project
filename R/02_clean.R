@@ -5,9 +5,27 @@ snvs_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.mutect2_snv.tsv.gz")
 
 snvs <- snvs_raw %>% 
   filter(filter == "PASS",
-         !grepl("synonymous_variant", effect)) 
+         !grepl("synonymous_variant", effect))
 
-snvs
+snvs[rev(order(snvs$dna_vaf)),]
+
+snv_summary = snvs %>% 
+  group_by(Sample_ID, gene) %>% 
+  summarise(count = 1) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = gene,
+            values_from = count) %>%
+  mutate_at(-1, replace_na, replace = 0)
+
+snv_summary[-1,]
+
+gene_counts = colSums(snv_summary[,-1])
+
+names(gene_counts[order(gene_counts, decreasing=TRUE)][1:25]) %>% 
+  cat(sep="\n")
+
+ggplot(mapping = aes(x =names(gene_counts[order(gene_counts, decreasing=TRUE)][1:25]), y = gene_counts[order(gene_counts, decreasing=TRUE)][1:25]))+
+  geom_col()
 
 ### CNVs
 cnvs_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.masked_cnv.tsv.gz")
@@ -40,3 +58,6 @@ pheno
 ### Methylation
 #methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
+
+### Survival
+survival <- read_tsv(file = "data/_raw/TCGA-SKCM.survival.tsv")

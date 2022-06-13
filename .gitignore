@@ -2,6 +2,7 @@ results/*
 data/*.*
 data/_raw/*
 !**/.gitkeep
+!data/gene_lengths.txt
 tmp/*
 # History files
 .Rhistory

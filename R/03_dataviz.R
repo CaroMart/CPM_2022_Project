@@ -62,7 +62,7 @@ View(head(count_data))
 gbm_expr_cpm <- apply(count_data, 2, function(x) x/sum(x)*1000000)
 
 pheno_data[,submitted_tumor_location]
-pheno_data <- pheno_data[pheno_data$submitted_tumor_location != '',]
+pheno_data <- pheno_data[!(pheno_data$submitted_tumor_location %in% c('', "Primary Tumor")),]
 pheno_data
 
 colnames(pheno_data)
@@ -90,17 +90,52 @@ pheno_sort$submitter_id.samples
 expr_sort <- gbm_expr_cpm_filtered[, order(colnames(gbm_expr_cpm_filtered))]
 expr_sort
 
+mad_values = apply(expr_sort, 1, mad)
+expr_mad = expr_sort[order(mad_values)[1:5000], ]
+
+dim(expr_mad)
+
 dim(gbm_expr_cpm_filtered)
 dim(pheno_data_filtered)
 
-pca <- prcomp(t(expr_sort))
+pca <- prcomp(t(expr_mad))
 
 pca %>% broom::tidy(matrix = "eigenvalues")
+pheno_sort$pathologic_T
+
+pheno_sort[c("breslow_depth_value", "submitted_tumor_location")]
 
 pca %>% broom::augment((pheno_sort)) %>% 
   ggplot(mapping = aes(
   x = .fittedPC1,
   y = .fittedPC2,
-  color = submitted_tumor_location)) +
-  geom_point() +
+  color = pathologic_N)) +
+  geom_point() + 
   stat_ellipse()
+
+pca %>% broom::augment((pheno_sort)) %>% 
+  ggplot(mapping = aes(
+    y = .fittedPC1,
+    x = submitted_tumor_location)) +
+  geom_boxplot()
+
+wilcox.test(data=(pca %>% broom::augment((pheno_sort))),
+              .fittedPC1~(submitted_tumor_location=="Primary Tumor"))
+
+
+survival_filter = survival[survival$sample %in% pheno_sort$submitter_id.samples,]
+
+new_survival = data.frame(sample = pheno_sort$submitter_id.samples, OS = rep(NA, length(pheno_sort$submitter_id.samples)))
+
+new_survival[new_survival$sample %in% survival_filter$sample,2] = survival_filter$OS
+
+table(new_survival$OS)
+survival_filter
+pca %>% broom::augment((new_survival)) %>% 
+  ggplot(mapping = aes(
+    x = .fittedPC1,
+    y = .fittedPC2,
+    color =  as.factor(OS))) +
+  geom_point(alpha = 0.8)
+
+survival
