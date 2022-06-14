@@ -75,7 +75,7 @@ names(avg_gene_freq[order(avg_gene_freq, decreasing=TRUE)][1:25]) %>%
   cat(sep="\n")
 
 ggplot(mapping = aes(x =names(gene_counts[order(gene_counts, decreasing=TRUE)][1:25]), y = gene_counts[order(gene_counts, decreasing=TRUE)][1:25]))+
-  geom_col()
+    geom_col()
 
 ### CNVs
 cnvs_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.masked_cnv.tsv.gz")
@@ -105,13 +105,64 @@ counts
 
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
 View(pheno)
-features_of_interest <- c("submitter_id.samples","age_at_initial_pathologic_diagnosis","breslow_depth_value")
-pheno
+pheno$malignant_neoplasm_mitotic_count_rate
+features_of_interest <- c("age_at_initial_pathologic_diagnosis","breslow_depth_value","age_at_initial_pathologic_diagnosis","days_to_submitted_specimen_dx","malignant_neoplasm_mitotic_count_rate") # submitter_id.samples
+hist.data.frame(pheno[,features_of_interest])
+pheno$new_tumor_dx_prior_submitted_specimen_dx
 
-ggplot(data=pheno,aes())
+ggplot(data = pheno, aes(x=factor(history_of_neoadjuvant_treatment))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(melanoma_clark_level_value))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(melanoma_origin_skin_anatomic_site))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(melanoma_ulceration_indicator))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(new_tumor_dx_prior_submitted_specimen_dx))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(other_dx))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(pathologic_M))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(pathologic_N))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(pathologic_T))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(person_neoplasm_cancer_status))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(postoperative_rx_tx))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(primary_melanoma_at_diagnosis_count))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(primary_neoplasm_melanoma_dx))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(primary_tumor_multiple_present_ind))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(prior_radiation_therapy))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(prior_systemic_therapy))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(prior_systemic_therapy_type))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(radiation_therapy))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(radiation_therapy_to_primary))) + geom_bar()
+ggplot(data = pheno, aes(x=factor(submitted_tumor_location))) + geom_bar() 
+ggplot(data = pheno, aes(x=factor(subsequent_primary_melanoma_during_followup))) + geom_bar() 
+ggplot(data = pheno, aes(x=factor(subsequent_primary_melanoma_during_followup))) + geom_bar() 
+
+pheno_factor <- apply(pheno,1, as.factor)
+class(pheno_factor)
+phen
 
 
-hist.data.frame(pheno)
+View(head(pheno))
+
+colnames(pheno_factor)
+
+
+names(pheno_factor)
+
+for (feature in names(pheno_factor)){
+  plot <- ggplot(data = pheno_factor, aes_string(x=feature)) + 
+    geom_bar()
+  ggsave(filename = paste("./tmp/",feature,"_bar",".png",sep=""),plot)
+}
+
+for (feature in colnames(pheno)){
+  plot <- ggplot(data = pheno, aes_string(x=factor(pheno[,feature]))) + 
+    geom_histogram()
+  ggsave(filename = paste("./tmp/",feature,"_hist",".png",sep=""),plot)
+}
+
+
+
+
+
+write.csv(pheno,file = "./tmp/pheno.csv")
+
 ### Methylation
 methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
