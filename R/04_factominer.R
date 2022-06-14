@@ -1,5 +1,6 @@
 library("FactoMineR")
 library("missMDA")
+library("tidyverse")
 
 
 # ncp is eqivalent to number of PC's in a PCA
@@ -39,7 +40,6 @@ pheno_factominer_test <- pheno_data_filtered %>%
          gender.demographic,
          race.demographic,
          year_of_birth.demographic,
-         age_at_diagnosis.diagnoses,
          primary_diagnosis.diagnoses,
          prior_malignancy.diagnoses,
          prior_treatment.diagnoses,
@@ -50,11 +50,26 @@ pheno_factominer_test <- pheno_data_filtered %>%
 data_factominer_test <- cnvs_factominer_test %>% 
   inner_join(snvs_factominer_test, by = "sample") %>%
   inner_join(pheno_factominer_test, by = "sample") %>%
-  column_to_rownames(., var = "sample")
+  column_to_rownames(., var = "sample") %>%
+  drop_na() %>%
+  mutate_at(vars(ethnicity.demographic,
+                 gender.demographic,
+                 race.demographic,
+                 year_of_birth.demographic,
+                 primary_diagnosis.diagnoses,
+                 prior_malignancy.diagnoses,
+                 prior_treatment.diagnoses,
+                 tumor_stage.diagnoses,
+                 name.tissue_source_site), factor)
+
 
 
 ### running imputation to fill out e.g. BMI 
-#res.impute <- imputeMFA(data_factominer_test, group=c(19210,46,11), type=c(rep("s",19210),rep("s",46),rep("n",11)),ncp=5)
+#res.impute <- imputeMFA(data_factominer_test,  group=c(46,19210,9), type=c(rep("s",2), "n"),ncp=5)
 
-res <- MFA(data_factominer_test, group=c(46,19210,10), type=c(rep("s",46), rep("s",19210), rep("n",4), "s", rep("n",5)),
+res <- MFA(data_factominer_test, group=c(46,19210,9), type=c(rep("s",2), "n"),
     ncp=5, name.group=c("cnv","snv","pheno"))
+
+summary(res)
+barplot(res$eig[,1],main="Eigenvalues",names.arg=1:nrow(res$eig))
+plot(res.pca, choix = "var", axes = c(1, 2), lim.cos2.var = 0)
