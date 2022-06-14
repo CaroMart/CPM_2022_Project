@@ -35,7 +35,7 @@ snv_summary_w_length = snvs %>%
 
 snv_summary = snv_summary_w_length %>% 
   filter(name != "length")
-
+snv_summary
 
 table(snv_summary[,"BRAF"])
 
@@ -164,7 +164,7 @@ for (feature in colnames(pheno)){
 write.csv(pheno,file = "./tmp/pheno.csv")
 
 ### Methylation
-methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
+# methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
 
 ### Survival
