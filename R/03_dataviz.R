@@ -109,12 +109,13 @@ stage_distribution_plot
 
 #-------------------------------------------------------------------------------
 # Load count data
-count_data <- read.csv("./data/_raw/TCGA-SKCM.htseq_counts.tsv.gz",
+count_data_raw <- read.csv("./data/_raw/TCGA-SKCM.htseq_counts.tsv.gz",
                        sep="\t",
                        fill = 0)
 
 
-count_data <- count_data[,2:473]
+count_data <- count_data_raw[,2:473]
+
 count_data <- sapply(count_data, 
                      as.numeric)
 View(head(count_data))
@@ -126,6 +127,7 @@ mel_expr_cpm <- apply(count_data,
                       function(x) x/sum(x)*1000000)
 
 #pheno_data[,submitted_tumor_location]
+dim(mel_expr_cpm)
 
 pheno_data <- pheno_data[!(pheno_data$submitted_tumor_location %in% c('', "Primary Tumor")),]
 pheno_data
@@ -156,10 +158,16 @@ str_replace_all(colnames(mel_expr_cpm_filtered), "\\.", "-")
 pheno_sort <- pheno_data_filtered[order(pheno_data_filtered$submitter_id.samples),]
 pheno_sort$submitter_id.samples
 expr_sort <- mel_expr_cpm_filtered[, order(colnames(mel_expr_cpm_filtered))]
+
 expr_sort
 
 mad_values = apply(expr_sort, 1, mad)
+gene_names_mad = count_data_raw[order(mad_values)[1:5000],1]
 expr_mad = expr_sort[order(mad_values)[1:5000], ]
+expr_mad
+
+
+colnames(expr_mad)
 
 dim(expr_mad)
 
@@ -196,6 +204,8 @@ survival_filter = survival[survival$sample %in% pheno_sort$submitter_id.samples,
 new_survival = data.frame(sample = pheno_sort$submitter_id.samples, OS = rep(NA, length(pheno_sort$submitter_id.samples)))
 
 new_survival[new_survival$sample %in% survival_filter$sample,2] = survival_filter$OS
+
+
 
 table(new_survival$OS)
 survival_filter
