@@ -9,19 +9,69 @@ snvs <- snvs_raw %>%
 
 snvs[rev(order(snvs$dna_vaf)),]
 
-snv_summary = snvs %>% 
+gene_lengths = read_delim(file = "data/gene_lengths.txt", delim = " ", col_names = c("gene", "length"))
+gene_lengths
+
+max(gene_lengths$length)
+
+snv_summary_w_length = snvs %>% 
   group_by(Sample_ID, gene) %>% 
-  summarise(count = 1) %>% 
-  ungroup() %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>%
+  pivot_wider(names_from = Sample_ID,
+              values_from = count) %>% 
+  mutate_at(-1, replace_na, replace = 0) %>%
+  left_join(gene_lengths, by="gene") %>% 
+  mutate_at(vars(matches("length")), 
+            replace_na, 
+            replace = max(gene_lengths$length)) %>% 
+  mutate_at(
+    vars(-matches(c("gene", "length"))),
+    .funs = ~ . / length
+  ) %>% 
+  pivot_longer(-gene) %>% 
   pivot_wider(names_from = gene,
-            values_from = count) %>%
-  mutate_at(-1, replace_na, replace = 0)
+              values_from = value)
 
-snv_summary[-1,]
+snv_summary = snv_summary_w_length %>% 
+  filter(name != "length")
 
-gene_counts = colSums(snv_summary[,-1])
 
-names(gene_counts[order(gene_counts, decreasing=TRUE)][1:25]) %>% 
+table(snv_summary[,"BRAF"])
+
+snv_summary[dim(snv_summary)[1],]
+snv_summary[-dim(snv_summary)[1],-1]
+
+snv_summary_count = snvs %>% 
+  group_by(Sample_ID, gene) %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>%
+  pivot_wider(names_from = gene,
+              values_from = count) %>% 
+  mutate_at(-1, replace_na, replace = 0) 
+
+sum_gene_freq_no_correction <- colSums(snv_summary_count[,-1])
+
+ggplot(mapping = aes(x = sum_gene_freq_no_correction, y =as.numeric(snv_summary_w_length[dim(snv_summary_w_length)[1],-1]))) +
+  geom_point() +
+  
+length(sum_gene_freq_no_correction)
+length(snv_summary_w_length[dim(snv_summary_w_length)[1],-1])
+as.numeric(snv_summary_w_length[dim(snv_summary_w_length)[1],-1])
+
+
+names(avg_gene_freq[order(avg_gene_freq, decreasing=TRUE)][1:25]) %>% 
+  cat(sep="\n")
+
+snv_summary
+
+?rowMedians
+
+avg_gene_freq = colMeans(snv_summary[-dim(snv_summary)[1],-1])
+
+avg_gene_freq["DEFB115"]
+
+names(avg_gene_freq[order(avg_gene_freq, decreasing=TRUE)][1:25]) %>% 
   cat(sep="\n")
 
 ggplot(mapping = aes(x =names(gene_counts[order(gene_counts, decreasing=TRUE)][1:25]), y = gene_counts[order(gene_counts, decreasing=TRUE)][1:25]))+
