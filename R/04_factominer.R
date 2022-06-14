@@ -102,10 +102,7 @@ data_factominer_test
 
 dim(data_factominer_test)
 
-dim(mel_expr_cpm_t)
-
-rownames(mel_expr_cpm_t)
-
+dim(expr_mad_tibble)
 
 dim(data_factominer_test)
 
@@ -113,7 +110,7 @@ dim(data_factominer_test)
 ### running imputation to fill out e.g. BMI 
 #res.impute <- imputeMFA(data_factominer_test,  group=c(46,19210,9), type=c(rep("s",2), "n"),ncp=5)
 
-res <- MFA(data_factominer_test, group=c(46,19210,9,60488), type=c(rep("s",2), "n","s"),
+res <- MFA(data_factominer_test, group=c(46,19210,9,5000), type=c(rep("s",2), "n","s"),
     ncp=5, name.group=c("cnv","snv","pheno","gene_expr"))
 
 summary(res)

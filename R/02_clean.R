@@ -104,7 +104,11 @@ counts
 ### Phenotype
 
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
-View(pheno)
+pheno_factor <- pheno %>% 
+  mutate_all(factor)
+
+
+
 pheno$malignant_neoplasm_mitotic_count_rate
 features_of_interest <- c("age_at_initial_pathologic_diagnosis","breslow_depth_value","age_at_initial_pathologic_diagnosis","days_to_submitted_specimen_dx","malignant_neoplasm_mitotic_count_rate") # submitter_id.samples
 hist.data.frame(pheno[,features_of_interest])
@@ -133,10 +137,18 @@ ggplot(data = pheno, aes(x=factor(submitted_tumor_location))) + geom_bar()
 ggplot(data = pheno, aes(x=factor(subsequent_primary_melanoma_during_followup))) + geom_bar() 
 ggplot(data = pheno, aes(x=factor(subsequent_primary_melanoma_during_followup))) + geom_bar() 
 
-pheno_factor <- apply(pheno,1, as.factor)
+pheno_factor <- apply(pheno,2, as.factor)
 class(pheno_factor)
-phen
+View(pheno_factor)
+colnames(pheno_factor) <- colnames(pheno)
+pheno_factor <- as.data.frame(pheno_factor)
+class(pheno_factor$batch_number)
+summary(pheno_factor)
 
+class(pheno)
+
+
+factor(pheno)
 
 View(head(pheno))
 
@@ -156,8 +168,6 @@ for (feature in colnames(pheno)){
     geom_histogram()
   ggsave(filename = paste("./tmp/",feature,"_hist",".png",sep=""),plot)
 }
-
-
 
 
 
