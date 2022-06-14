@@ -1,5 +1,5 @@
 library(tidyverse)
-
+library(Hmisc)
 ### SNVs
 snvs_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.mutect2_snv.tsv.gz")
 
@@ -102,11 +102,18 @@ counts <- read_tsv(file = "data/_raw/TCGA-SKCM.htseq_counts.tsv.gz")
 counts
 
 ### Phenotype
+
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
+View(pheno)
+features_of_interest <- c("submitter_id.samples","age_at_initial_pathologic_diagnosis","breslow_depth_value")
 pheno
 
+ggplot(data=pheno,aes())
+
+
+hist.data.frame(pheno)
 ### Methylation
-#methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
+methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
 
 ### Survival
