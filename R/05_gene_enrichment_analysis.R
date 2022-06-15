@@ -69,7 +69,7 @@ for (i in c(1)) {
   log2fc <- apply(subtype_sig, 1, FUN = row_fc)
   
   print(i)
-  print(length(gene_signatures))
+  print(length(log2fc))
 }
 
-gene_signatures
+log2fc

@@ -111,13 +111,17 @@ cnv_summary_filter <- cnv_summary %>%
 counts <- read_tsv(file = "data/_raw/TCGA-SKCM.htseq_counts.tsv.gz")
 counts
 
+
+### Survival
+survival <- read_tsv(file = "data/_raw/TCGA-SKCM.survival.tsv")
+
+
 ### Phenotype
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
 
 pheno_filter_all <- pheno %>% 
   filter(!(submitted_tumor_location %in% c('', "Primary Tumor"))) %>% 
   mutate(sample = submitter_id.samples) %>%
-  filter(sample %in% pull(survival_filter, sample)) %>%
   select(sample,
          age_at_initial_pathologic_diagnosis,
          breslow_depth_value,
@@ -201,9 +205,15 @@ pheno_filter_numeric <- pheno_filter_all %>%
 pheno <- pheno %>% 
   mutate(prior_systemic_therapy_type = replace_na(prior_systemic_therapy_type, 
                                                   "None"))
+
+survival <- read_tsv("./data/_raw/TCGA-SKCM.survival.tsv")
+survival_filter <- survival %>% 
+  filter(sample %in% pull(pheno_filter_all,sample))
+  
+
+
 ### Methylation
 # methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
 
-### Survival
-survival <- read_tsv(file = "data/_raw/TCGA-SKCM.survival.tsv")
+
