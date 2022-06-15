@@ -32,6 +32,14 @@ response %>%
   theme_minimal() +
   labs(title = "Mutational load pr. patient")
 
+# Purity for non-responders and responders
+estimate_output %>% 
+  ggplot(mapping = aes(x = TumorPurity)) +
+  geom_density() +
+  theme_minimal() +
+  facet_wrap(~response_char$response) +
+  labs(title = "Tumor purity stratified on responders vs. non-responders")
+
 #-------------------------------------------------------------------------------
 # PCA
 
