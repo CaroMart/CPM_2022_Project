@@ -16,13 +16,13 @@ library("tidyverse")
 # 
 # res$global.pca
 # 
-data(orange)
-res.impute <- imputeMFA(orange, group=c(5,3), type=rep("s",2),ncp=2)
-summary(res.impute)
-res.impute$completeObs
-res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2))
-summary(res.mfa)
-barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
+# data(orange)
+# res.impute <- imputeMFA(orange, group=c(5,3), type=rep("s",2),ncp=2)
+# summary(res.impute)
+# res.impute$completeObs
+# res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2))
+# summary(res.mfa)
+# barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
 
 
 data(wine)
