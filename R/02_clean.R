@@ -112,6 +112,9 @@ counts
 ### Phenotype
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
 
+pheno <- pheno %>% 
+  mutate(prior_systemic_therapy_type = replace_na(prior_systemic_therapy_type, 
+                                                  "None"))
 ### Methylation
 # methylation_raw <- read_tsv(file = "data/_raw/TCGA-SKCM.methylation450.tsv.gz")
 
