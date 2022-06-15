@@ -40,6 +40,14 @@ estimate_output %>%
   facet_wrap(~response_char$response) +
   labs(title = "Tumor purity stratified on responders vs. non-responders")
 
+# Mut_load for non-responders and responders
+response_char %>% 
+  ggplot(mapping = aes(x = mut_load)) +
+  geom_density() +
+  theme_minimal() +
+  facet_wrap(~response) +
+  labs(title = "Mut_load")
+
 #-------------------------------------------------------------------------------
 # PCA
 
