@@ -1,11 +1,15 @@
 library("MCPcounter")
+library("tidyverse")
 
-x$
+source("R_new/estimate_function.R")
+
 estimate_output <- myEstimateFunction(tpm_ensg)
 MCP_output <- MCPcounter.estimate(tpm_ensg,featuresType = "HUGO_symbols")
 MCP_output
+
 ## Fitting linear models to estimate output
-estimate_output
+round(estimate_output$TumorPurity, )
+
 tpm_ensg_t <- t(tpm_ensg)
 tpm_ensg_t <- as.data.frame(tpm_ensg_t)
 
@@ -24,10 +28,24 @@ tpm_ensg_t_grouped_data <- tpm_ensg_t_long %>%
   nest()  %>% 
   ungroup()
 
-
 tpm_ensg_t_grouped_data <- tpm_ensg_t_grouped_data %>%
-  mutate(mdl = map(data, ~glm(purity ~ counts,
+  mutate(mdl = map(data, ~glm(counts ~ purity,
                               data = .x)))  
+
+#tpm_ensg_t_grouped_data$data
+tpm_ensg_t_grouped_data_calc <- tpm_ensg_t_grouped_data %>% 
+  mutate(max_purity_counts = map(mdl, function(x){
+    tibble(estimated_purity = sum(coef(x)*c(1,1)) + residuals(x),
+           sample_nr = rownames(tpm_ensg_t))
+  }))
+
+#tpm_ensg_t_grouped_data_calc
+tpm_ensg_t_grouped_data_calc %>% 
+  unnest(max_purity_counts) %>% 
+  select(-data, -mdl) %>% 
+  pivot_wider(names_from = genes, values_from = estimated_purity)
+
+tpm_ensg_t_grouped_data_calc[1,4][[1]]
 
 grouped_data_sample_tidy <- tpm_ensg_t_grouped_data %>% 
   mutate(tidy = map(mdl, broom::tidy)) %>% 

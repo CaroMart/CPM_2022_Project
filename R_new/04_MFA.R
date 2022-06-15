@@ -30,9 +30,11 @@ data_factominer <- MCP_transposed %>%
   column_to_rownames(., var = "patient")
 
 ## MFA ##
-
-res_MFA <- MFA(data_factominer, group=c(10,35808,3468,4), type=c(rep("s", 4)),
-           ncp=5, name.group=c("MCP_count","tpm_ensg","LOF","estimate"))
+data_factominer
+View(head(data_factominer))
+dim(data_factominer)
+res_MFA <- MFA(data_factominer, group=c(10,35808,3468,4), type=c(rep("c", 4)),
+           ncp=20, name.group=c("MCP_count","tpm_ensg","LOF","estimate"))
 
 ## Plotting result
 PC_matrix <- res_MFA$ind
@@ -42,7 +44,40 @@ ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = response$response)) +
   geom_point() + 
   stat_ellipse()
 
+fosmp = c()
+fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.1<(-2),]))
+fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.2>2,]))
+
+fosmp
+
+data_factominer_removed_fosmp = data_factominer[!(rownames(data_factominer) %in% fosmp),]
+
+res_MFA <- MFA(data_factominer_removed_fosmp, group=c(10,35808,3468,4), type=c(rep("c", 4)),
+               ncp=20, name.group=c("MCP_count","tpm_ensg","LOF","estimate"))
+
+## Plotting result
+PC_matrix <- res_MFA$ind
+PC_matrix_df <- as.data.frame(PC_matrix$coord)
+
+ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(response$response[!(rownames(data_factominer) %in% fosmp)]))) + 
+  geom_point() + 
+  stat_ellipse()
+
+heatmap(PC_matrix$coord)
+
+
+res_MFA$ind$coord
+res_MFA
+
+response$response
 
 ## Hierarchical ##
-hierar <- list(c(10,35808,3468,4), c(3,1))
-res_HMFA <- HMFA(data_factominer, H = hierar, type=c(rep("s",4)), graph = TRUE)
+#hierar <- list(c(10,35808,3468,4), c(3,1))
+#res_HMFA <- HMFA(data_factominer, H = hierar, type=c(rep("s",4)), graph = TRUE)
+
+PC_matrix
+heatmap(PC_matrix$coord)
+clusters = hclust(dist(PC_matrix$coord))
+clusters$labels <- response$RECIST
+plot(clusters)
+summary(res_MFA)
