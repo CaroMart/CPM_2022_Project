@@ -2,7 +2,7 @@ myEstimateFunction <- function(
   ds # matrix with gene names as row-names
 ) {
   library(estimate)
-  platform <- c("affymetrix") 
+  platform <- c("illumina") 
   #platform <- match.arg(platform)
   #ds <- read.delim(input.ds, header = TRUE, sep = "\t", skip = 2,
   #                 row.names = 1, blank.lines.skip = TRUE, as.is = TRUE,
@@ -98,7 +98,7 @@ myEstimateFunction <- function(
   
   convert_row_estimate_score_to_tumor_purity <- function(x) {
     stopifnot(is.numeric(x))
-    cos(0.6049872018 + 0.0001467884 * x)
+    cos(0.6049872018 + 0.0001467884 * x/(23729.752/6579.6))
   }
   est.new <- NULL
   for (i in 1:length(estimate.score)) {
