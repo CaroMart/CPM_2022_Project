@@ -37,6 +37,10 @@ snv_summary = snv_summary_w_length %>%
   filter(name != "length")
 snv_summary
 
+## snv for FactoMineR
+snv_summary_filter <- snv_summary %>%
+  filter(name %in% pull(survival_filter, sample))
+
 table(snv_summary[,"BRAF"])
 
 snv_summary[dim(snv_summary)[1],]
@@ -96,6 +100,10 @@ cnv_summary <- cnvs %>%
   mutate_at(vars(matches("^[0-9]")), replace_na, replace = 0)
 
 cnv_summary
+
+## for FactoMineR
+cnv_summary_filter <- cnv_summary %>%
+  filter(sample %in% pull(survival_filter, sample))
 
 ### Counts
 counts <- read_tsv(file = "data/_raw/TCGA-SKCM.htseq_counts.tsv.gz")
