@@ -8,7 +8,6 @@ SNV_data <- read.csv("./data/_raw/TCGA-SKCM.mutect2_snv.tsv.gz",
                      sep="\t")
 SNV_data_tibble <- as_tibble(SNV_data)
 
-View(head(SNV_data_tibble))
 #-------------------------------------------------------------------------------
 # Plotting number of missense variants pr. chromosome
 SNV_data_tibble %>%
@@ -35,7 +34,6 @@ pheno_data <- read.csv("./data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz",
                        sep="\t")
 pheno_data_tibble <- as_tibble(pheno_data)
 
-View(head(pheno_data_tibble))
 #-------------------------------------------------------------------------------
 
 # Plotting distant metastasis sites
@@ -75,12 +73,12 @@ pheno_data_tibble %>%
 # Plotting Age distribution
 age_distribution_plot <- pheno_data_tibble %>% 
   ggplot(mapping = aes(
-    x = age_at_diagnosis.diagnoses,
+    x = age_at_initial_pathologic_diagnosis,
     fill = gender.demographic)) +
   geom_histogram(bins = 30) +
   facet_wrap(~gender.demographic) +
   labs(title = "Distribution of Age at diagnosis stratified on sex",
-       x = "Age [days] at initial diagnosis" ) +
+       x = "Age at initial diagnosis") +
   theme_classic()
   
 age_distribution_plot
@@ -103,7 +101,9 @@ stage_distribution_plot <- pheno_data_tibble %>%
     x = tumor_stage.diagnoses)) +
   geom_bar() +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = "Distribution of tumor stages",
+       x = "Tumor stage")
 
 stage_distribution_plot
 
