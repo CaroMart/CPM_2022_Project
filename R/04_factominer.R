@@ -24,6 +24,11 @@ res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2))
 summary(res.mfa)
 barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
 
+
+data(wine)
+hierar <- list(c(2,5,3,10,9,2), c(4,2))
+res.hmfa <- HMFA(wine, H = hierar, type=c("n",rep("s",5)), graph = TRUE)
+
 #### Testing factoMineR on small dataframe ####
 
 ## Creating small dataframe
@@ -140,11 +145,7 @@ ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(feature_survival))) +
 
 ## Running MFA for real 
 
-## To be put in 02_clean
-
-
-## MFA
-
+## The data frames - put in clean or augment
 samples_in_all_data <- cnv_summary_filter %>% 
   inner_join(snv_summary_filter, by = "sample") %>%
   inner_join(pheno_filter_categorical, by = "sample") %>%
@@ -152,19 +153,46 @@ samples_in_all_data <- cnv_summary_filter %>%
   inner_join(expr_mad_tibble, by = "sample") %>%
   select(sample)
 
-impute_data <- snv_summary_filter %>%
+impute_data_numeric <- cnv_summary_filter %>% 
+  inner_join(snv_summary_filter, by = "sample") %>%
   inner_join(pheno_filter_numeric, by = "sample") %>%
-  column_to_rownames(., var = "sample")
-  
-# Imputing NA values for continuous values 
-res.impute <- imputeMFA(impute_data,group=c(19210,8), type=c("c","c"),ncp=2)
-dim(res.impute$completeObs)
-#res.impute <- imputeMFA(data_factominer,group=c(46,19210,16,8,5000), type=c("f","c","n","c","f"),ncp=2)
-
-
-data_factominer <- cnv_summary_filter %>% 
-  inner_join(pheno_filter_categorical, by = "sample") %>%
   inner_join(expr_mad_tibble, by = "sample") %>%
   filter(sample %in% samples_in_all_data$sample) %>%
-  column_to_rownames(., var = "sample") %>%
-  bind_cols(res.impute$completeObs)
+  column_to_rownames(., var = "sample")
+
+
+impute_data_categorical <- pheno_filter_categorical %>%
+  filter(sample %in% samples_in_all_data$sample) %>%
+  column_to_rownames(., var = "sample")  
+
+survival_of_351 <- samples_in_all_data %>% left_join(survival_filter, by = "sample")
+  
+## Imputing NA values for continuous values 
+# should continuous variables be s or c? (that is, are they scaled or not). 
+# impute seems to only work when they are c
+res.imputeMFA <- imputeMFA(impute_data_numeric,group=c(46,19210,8,5000), type=c("c","c","c","c"),ncp=2)
+res.imputeMCA <- imputeMCA(impute_data_categorical, ncp=2)
+dim(res.imputeMFA$completeObs)
+dim(res.imputeMCA$completeObs)
+
+data_factominer <- samples_in_all_data %>%
+  bind_cols(res.imputeMCA$completeObs) %>%
+  bind_cols(res.imputeMFA$completeObs) %>%
+  column_to_rownames(., var = "sample")  
+
+## Running MFA
+
+res <- MFA(data_factominer, group=c(16,46,19210,8,5000), type=c("n","s","s","s","s"),
+           ncp=5, name.group=c("pheno_cat","cnv","snv","pheno_num","gene_expr"))
+
+## Running HMFA
+
+res <- HMFA(data_factominer)
+
+## Plotting result
+PC_matrix <- res$ind
+PC_matrix_df <- as.data.frame(PC_matrix$coord)
+
+ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = survival_of_351$OS)) + 
+  geom_point() + 
+  stat_ellipse()
