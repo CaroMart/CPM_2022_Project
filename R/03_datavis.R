@@ -146,8 +146,6 @@ count_data_tibble <- as_tibble(count_data)
 
 mel_expr_cpm_filtered
 
-colnames(pheno)
-
 
 #-------------------------------------------------------------------------------
 # PCA
@@ -155,37 +153,49 @@ pheno_data_filtered$submitter_id.samples == str_replace_all(colnames(mel_expr_cp
 order(pheno_data_filtered$submitter_id.samples)
 str_replace_all(colnames(mel_expr_cpm_filtered), "\\.", "-")
 
+
 pheno_sort <- pheno_data_filtered[order(pheno_data_filtered$submitter_id.samples),]
 pheno_sort$submitter_id.samples
+
+# Survival data (SHOULD BE PUT INTO CLEAN)
+
+survival_raw <- read.csv("./data/_raw/TCGA-SKCM.survival.tsv",
+                          sep = "\t")
+
+survival_filter <- survival_raw[survival_raw$sample %in% pheno_sort$submitter_id.samples,]
+
+new_survival <- data.frame(sample = pheno_sort$submitter_id.samples)
+
+new_survival <- inner_join(new_survival, 
+                           survival_filter,
+                           by = "sample") %>% 
+  select(sample, OS)
+
+dim(new_survival) #356
+
+# PCA: gene expression
+  
 expr_sort <- mel_expr_cpm_filtered[, order(colnames(mel_expr_cpm_filtered))]
 
-expr_sort
+mad_values <- apply(expr_sort, 1, mad)
+gene_names_mad <- count_data_raw[order(mad_values)[1:5000],1] #bliver ikke brugt
+expr_mad <- expr_sort[order(mad_values)[1:5000], ]
+View(expr_mad)
 
-mad_values = apply(expr_sort, 1, mad)
-gene_names_mad = count_data_raw[order(mad_values)[1:5000],1]
-expr_mad = expr_sort[order(mad_values)[1:5000], ]
-expr_mad
-
-
-colnames(expr_mad)
-
-dim(expr_mad)
-
-dim(mel_expr_cpm_filtered)
-dim(pheno_data_filtered)
+expr_test <- expr_mad %>% 
+  select()
 
 pca <- prcomp(t(expr_mad))
 
 pca %>% broom::tidy(matrix = "eigenvalues")
-pheno_sort$pathologic_T
 
 pheno_sort[c("breslow_depth_value", "submitted_tumor_location")]
 
-pca %>% broom::augment((pheno_sort)) %>% 
+pca %>% broom::augment((new_survival)) %>% 
   ggplot(mapping = aes(
   x = .fittedPC1,
   y = .fittedPC2,
-  color = pathologic_N)) +
+  color = OS)) + # Skal farves på survival
   geom_point() + 
   stat_ellipse()
 
@@ -199,14 +209,6 @@ wilcox.test(data=(pca %>% broom::augment((pheno_sort))),
               .fittedPC1~(submitted_tumor_location=="Primary Tumor"))
 
 
-survival_filter = survival[survival$sample %in% pheno_sort$submitter_id.samples,]
-
-new_survival = data.frame(sample = pheno_sort$submitter_id.samples, OS = rep(NA, length(pheno_sort$submitter_id.samples)))
-
-new_survival[new_survival$sample %in% survival_filter$sample,2] = survival_filter$OS
-
-
-
 table(new_survival$OS)
 survival_filter
 pca %>% broom::augment((new_survival)) %>% 
@@ -216,4 +218,3 @@ pca %>% broom::augment((new_survival)) %>%
     color =  as.factor(OS))) +
   geom_point(alpha = 0.8)
 
-survival
