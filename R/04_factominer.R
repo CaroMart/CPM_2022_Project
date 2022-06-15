@@ -6,19 +6,21 @@ library("tidyverse")
 # ncp is eqivalent to number of PC's in a PCA
 # num.group.sup can be used to indicate which groups should NOT be included in MFA
 
-data("wine")
-dim(wine)
-res <- MFA(wine, group=c(2,5,3,10,9,2), type=c("n",rep("s",5)),
-           ncp=5, name.group=c("orig","olf","vis","olfag","gust","ens"),
-           num.group.sup=c(1,6))
-summary(res)
-barplot(res$eig[,1],main="Eigenvalues",names.arg=1:nrow(res$eig))
-
-res$global.pca
-
+# data("wine")
+# dim(wine)
+# res <- MFA(wine, group=c(2,5,3,10,9,2), type=c("n",rep("s",5)),
+#            ncp=5, name.group=c("orig","olf","vis","olfag","gust","ens"),
+#            num.group.sup=c(1,6))
+# summary(res)
+# barplot(res$eig[,1],main="Eigenvalues",names.arg=1:nrow(res$eig))
+# 
+# res$global.pca
+# 
 data(orange)
-res.impute <- imputeMFA(orange, group=c(5,3), type=rep("s",2),ncp=2) 
-res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2)) 
+res.impute <- imputeMFA(orange, group=c(5,3), type=rep("s",2),ncp=2)
+summary(res.impute)
+res.impute$completeObs
+res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2))
 summary(res.mfa)
 barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
 
@@ -26,7 +28,7 @@ barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
 
 ## Creating small dataframe
 ## Only keeping samples for which we have survival data 
-snv_summary
+# snv_summary
 # snv_summary_df <- as.data.frame(snv_summary)
 # rownames(snv_summary_df) <- snv_summary_df$name
 # 
@@ -38,7 +40,7 @@ snv_summary
 # 
 # res <- MFA(snv_summary_df_sample, group=c(499,), type=c("s"),
 #            ncp=5, name.group=c("snv"))
-snv_summary
+#snv_summary
 
 snvs_factominer_test <- snv_summary %>%
   mutate(sample = name) %>%
@@ -135,3 +137,34 @@ ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(feature_survival))) +
   geom_point() + 
   stat_ellipse()
 
+
+## Running MFA for real 
+
+## To be put in 02_clean
+
+
+## MFA
+
+samples_in_all_data <- cnv_summary_filter %>% 
+  inner_join(snv_summary_filter, by = "sample") %>%
+  inner_join(pheno_filter_categorical, by = "sample") %>%
+  inner_join(pheno_filter_numeric, by = "sample") %>%
+  inner_join(expr_mad_tibble, by = "sample") %>%
+  select(sample)
+
+impute_data <- snv_summary_filter %>%
+  inner_join(pheno_filter_numeric, by = "sample") %>%
+  column_to_rownames(., var = "sample")
+  
+# Imputing NA values for continuous values 
+res.impute <- imputeMFA(impute_data,group=c(19210,8), type=c("c","c"),ncp=2)
+dim(res.impute$completeObs)
+#res.impute <- imputeMFA(data_factominer,group=c(46,19210,16,8,5000), type=c("f","c","n","c","f"),ncp=2)
+
+
+data_factominer <- cnv_summary_filter %>% 
+  inner_join(pheno_filter_categorical, by = "sample") %>%
+  inner_join(expr_mad_tibble, by = "sample") %>%
+  filter(sample %in% samples_in_all_data$sample) %>%
+  column_to_rownames(., var = "sample") %>%
+  bind_cols(res.impute$completeObs)

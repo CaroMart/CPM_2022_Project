@@ -39,7 +39,9 @@ snv_summary
 
 ## snv for FactoMineR
 snv_summary_filter <- snv_summary %>%
-  filter(name %in% pull(survival_filter, sample))
+  filter(name %in% pull(survival_filter, sample)) %>%
+  mutate(sample = name) %>%
+  select(-name)
 
 table(snv_summary[,"BRAF"])
 
@@ -111,6 +113,90 @@ counts
 
 ### Phenotype
 pheno <- read_tsv(file = "data/_raw/TCGA-SKCM.GDC_phenotype.tsv.gz")
+
+pheno_filter_all <- pheno %>% 
+  filter(!(submitted_tumor_location %in% c('', "Primary Tumor"))) %>% 
+  mutate(sample = submitter_id.samples) %>%
+  filter(sample %in% pull(survival_filter, sample)) %>%
+  select(sample,
+         age_at_initial_pathologic_diagnosis,
+         breslow_depth_value,
+         days_to_collection.samples,
+         days_to_submitted_specimen_dx,
+         gender.demographic,
+         height.exposures,
+         history_of_neoadjuvant_treatment,
+         icd_10_code.diagnoses,
+         initial_weight.samples,
+         malignant_neoplasm_mitotic_count_rate,
+         melanoma_clark_level_value,
+         melanoma_ulceration_indicator,
+         pathologic_M,
+         pathologic_N,
+         pathologic_T,
+         primary_diagnosis.diagnoses,
+         prior_malignancy.diagnoses,
+         prior_systemic_therapy_type, #NA = None
+         race.demographic,
+         ethnicity.demographic,
+         site_of_resection_or_biopsy.diagnoses,
+         submitted_tumor_location,
+         system_version,
+         weight) %>%
+  replace_na(list(prior_systemic_therapy_type = "None")) %>%
+  mutate_at(vars(gender.demographic,
+                 history_of_neoadjuvant_treatment,
+                 icd_10_code.diagnoses,
+                 melanoma_clark_level_value,
+                 melanoma_ulceration_indicator,
+                 pathologic_M,
+                 pathologic_N,
+                 pathologic_T,
+                 primary_diagnosis.diagnoses,
+                 prior_malignancy.diagnoses,
+                 prior_systemic_therapy_type,
+                 race.demographic,
+                 ethnicity.demographic,
+                 site_of_resection_or_biopsy.diagnoses,
+                 submitted_tumor_location,
+                 system_version), factor)
+
+pheno_filter_categorical <- pheno_filter_all %>%
+  select(sample,
+         gender.demographic,
+         history_of_neoadjuvant_treatment,
+         icd_10_code.diagnoses,
+         melanoma_clark_level_value,
+         melanoma_ulceration_indicator,
+         pathologic_M,
+         pathologic_N,
+         pathologic_T,
+         primary_diagnosis.diagnoses,
+         prior_malignancy.diagnoses,
+         prior_systemic_therapy_type,
+         race.demographic,
+         ethnicity.demographic,
+         site_of_resection_or_biopsy.diagnoses,
+         submitted_tumor_location,
+         system_version)
+
+pheno_filter_numeric <- pheno_filter_all %>%
+  select(-gender.demographic,
+         -history_of_neoadjuvant_treatment,
+         -icd_10_code.diagnoses,
+         -melanoma_clark_level_value,
+         -melanoma_ulceration_indicator,
+         -pathologic_M,
+         -pathologic_N,
+         -pathologic_T,
+         -primary_diagnosis.diagnoses,
+         -prior_malignancy.diagnoses,
+         -prior_systemic_therapy_type,
+         -race.demographic,
+         -ethnicity.demographic,
+         -site_of_resection_or_biopsy.diagnoses,
+         -submitted_tumor_location,
+         -system_version)
 
 pheno <- pheno %>% 
   mutate(prior_systemic_therapy_type = replace_na(prior_systemic_therapy_type, 
