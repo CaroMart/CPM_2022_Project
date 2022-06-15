@@ -15,7 +15,7 @@ pheno_features_of_interest <- c("age_at_initial_pathologic_diagnosis",
   "pathologic_T",
   "primary_diagnosis.diagnoses",
   "prior_malignancy.diagnoses",
-  "prior_systemic_therapy_type", #NA = None
+  "prior_systemic_therapy_type",
   "race.demographic",
   "ethnicity.demographic",
   "site_of_resection_or_biopsy.diagnoses",
