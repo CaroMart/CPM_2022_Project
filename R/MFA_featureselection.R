@@ -1,4 +1,4 @@
-c("age_at_initial_pathologic_diagnosis",
+pheno_features_of_interest <- c("age_at_initial_pathologic_diagnosis",
   "breslow_depth_value",
   "days_to_collection.samples",
   "days_to_submitted_specimen_dx",
