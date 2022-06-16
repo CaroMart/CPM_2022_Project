@@ -70,22 +70,23 @@ fosmp
 # OBS look at plot before to determine new outliers!
 data_factominer_removed_fosmp = data_factominer[!(rownames(data_factominer) %in% fosmp),]
 
-res_MFA <- MFA(data_factominer_removed_fosmp, group=c(10,5000,3468,5000,1,1), type=c(rep("c", 6)),
+res_MFA_fosmp <- MFA(data_factominer_removed_fosmp, group=c(10,5000,3468,5000,1,1), type=c(rep("c", 6)),
                ncp=20, name.group=c("MCP_count","mad_tpm_ensg","LOF","purity_corrected_tpm","TMB", "purity_score"))
 
-## Plotting result
-PC_matrix <- res_MFA$ind
-PC_matrix_df <- as.data.frame(PC_matrix$coord)
 
-ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(response$response[!(rownames(data_factominer) %in% fosmp)]))) + 
+## Plotting result
+PC_matrix_fosmp <- res_MFA_fosmp$ind
+PC_matrix_fosmp_df <- as.data.frame(PC_matrix_fosmp$coord)
+
+ggplot(PC_matrix_fosmp_df,aes(x=Dim.1, y=Dim.2, color = factor(response$response[!(rownames(data_factominer) %in% fosmp)]))) + 
   geom_point() + 
   stat_ellipse()
 
-heatmap(PC_matrix$coord)
+heatmap(PC_matrix_fosmp$coord)
 
 
-res_MFA$ind$coord
-res_MFA
+res_MFA_fosmp$ind$coord
+res_MFA_fosmp
 
 response$response
 
@@ -93,9 +94,9 @@ response$response
 #hierar <- list(c(10,35808,3468,4), c(3,1))
 #res_HMFA <- HMFA(data_factominer, H = hierar, type=c(rep("s",4)), graph = TRUE)
 
-PC_matrix
-heatmap(PC_matrix$coord)
-clusters <- hclust(dist(PC_matrix$coord))
+PC_matrix_fosmp
+heatmap(PC_matrix_fosmp$coord)
+clusters = hclust(d=dist(PC_matrix_fosmp$coord))
 clusters$labels <- response$response
 plot(clusters)
-summary(res_MFA)
+summary(res_MFA_fosmp)
