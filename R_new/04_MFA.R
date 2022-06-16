@@ -100,3 +100,49 @@ clusters = hclust(d=dist(PC_matrix_fosmp$coord))
 clusters$labels <- response$response
 plot(clusters)
 summary(res_MFA_fosmp)
+
+## Manually define two clusters and outliers
+
+cluster1 <- c("MM909_43", "MM909_15", "MM909_16", "MM909_35", "MM909_31", "MM909_27")
+cluster2 <- c("MM909_42", "MM909_02", "MM909_37", "MM909_46", "MM909_25", "MM909_11", "MM909_40", "MM909_36", "MM909_34", "MM909_14", "MM909_47")
+outliers <- c("MM909_26", "MM909_06")
+
+## Try calculating gene enrichment, and only include those in MFA
+## Conclusion: Too many genes to test, so when adjusting for 
+## multiple testing, we find no significant values
+
+# Make an empty list to store your signatures in
+gene_signatures <- list()
+# Make a function to do a MWW U test
+row_mww <- function(x) {
+  subtype <- x[response$response == i]
+  rest <- x[!response$response == i]
+  res <- wilcox.test(subtype, rest)
+  return(res$p.value)
+}
+# Make a function to calculate log2 fc
+row_fc <- function(x) {
+  subtype <- x[response$response == i]
+  rest <- x[!response$response == i]
+  res <- log2(median(subtype)/median(rest))
+  return(res)
+}
+
+wilcox.test(c(rep(0, 10), rep(1, 12))~1)
+
+tpm_ensg
+pvals
+
+for (i in c(1)) {
+  pvals <- apply(tpm_ensg, 1, FUN = row_mww)
+  padj <- p.adjust(pvals, method = "BY")
+  sig_probes <- rownames(tpm_ensg)[padj<0.05]
+  subtype_sig <- tpm_ensg[rownames(tpm_ensg) %in% sig_probes,]
+  log2fc <- apply(subtype_sig, 1, FUN = row_fc)
+  
+  print(i)
+  print(length(log2fc))
+}
+
+log2fc
+pvals
