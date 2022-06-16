@@ -60,12 +60,14 @@ ggplot(data = estimate_output, aes(x=ESTIMATEScore)) + geom_histogram()
 
 ####### LOF data ####### 
 LOF_mut_t <- t(LOF_mut)
+LOF_mut_t_filtered <- LOF_mut_t[,colSums(LOF_mut_t) > 0]
 
-LOF_sums_0 <- as.data.frame(colSums(LOF_mut_t[response$response == 0,]/sum(response$response == 0)))
+
+LOF_sums_0 <- as.data.frame(colSums(LOF_mut_t_filtered[response$response == 0,]/sum(response$response == 0)))
 names(LOF_sums_0)
 LOF_sums_0 %>% 
   rownames_to_column(.,"gene") %>% 
-  rename(., sum_count = 'colSums(LOF_mut_t[response$response == 0, ]/sum(response$response == 0))') %>% 
+  rename(., sum_count = 'colSums(LOF_mut_t_filtered[response$response == 0, ]/sum(response$response == 0))') %>% 
   top_n(., 10, sum_count) %>% 
   arrange(.,desc(sum_count)) %>% 
   ggplot(.,aes(x=fct_reorder(gene,sum_count),y=sum_count)) + 
@@ -73,11 +75,11 @@ LOF_sums_0 %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
-LOF_sums_1 <- as.data.frame(colSums(LOF_mut_t[response$response == 1,]/sum(response$response == 1)))
+LOF_sums_1 <- as.data.frame(colSums(LOF_mut_t_filtered[response$response == 1,]/sum(response$response == 1)))
 names(LOF_sums_1)
 LOF_sums_1 %>% 
   rownames_to_column(.,"gene") %>% 
-  rename(., sum_count = 'colSums(LOF_mut_t[response$response == 1, ]/sum(response$response == 1))') %>% 
+  rename(., sum_count = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
   top_n(., 10, sum_count) %>% 
   arrange(.,desc(sum_count)) %>% 
   ggplot(.,aes(x=fct_reorder(gene,sum_count),y=sum_count)) + 
@@ -85,8 +87,88 @@ LOF_sums_1 %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 
+as.data.frame(LOF_sums_1 - LOF_sums_0) %>% 
+  rownames_to_column("gene") %>% 
+  rename(diff_freq = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
+  ggplot(.,aes(x=diff_freq)) + geom_density() + geom_vline(xintercept = -0.12, linetype="dotted", 
+                                                           color = "blue", size=1.5)
+
+more_common_LOF_res <- as.data.frame(LOF_sums_1 - LOF_sums_0) %>% 
+  rownames_to_column("gene") %>% 
+  rename(diff_freq = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
+  filter(diff_freq > 0.15)
+
+dim(more_common_LOF_res)
+write.table(more_common_LOF_res$gene,"./tmp/more_common_LOF_res.csv")
+
+more_common_LOF_nonres <- as.data.frame(LOF_sums_1 - LOF_sums_0) %>% 
+  rownames_to_column("gene") %>% 
+  rename(diff_freq = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
+  filter((diff_freq < -0.12))
+
+more_common_LOF_nonres
+
+write.table(common_LOF_res_non_res$gene,"./tmp/common_LOF_res_non_res.csv")
 
 
-lof_1_clust <- hclust(dist(LOF_mut_t[response$response == 1,]))
+common_LOF_res_non_res <- as.data.frame(LOF_sums_1 - LOF_sums_0) %>% 
+  rownames_to_column("gene") %>% 
+  rename(diff_freq = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
+  mutate(freq1 = colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1)),
+         freq0 = colSums(LOF_mut_t_filtered[response$response == 0, ]/sum(response$response == 0))) %>% 
+  filter((diff_freq > -0.12) & 
+           (diff_freq < 0.12) & 
+           (freq1 > 0.0) & 
+           (freq0 > 0.0))
 
-plot(lof_1_clust)
+LOF_data <- as.data.frame(LOF_sums_1 - LOF_sums_0) %>% 
+  rownames_to_column("gene") %>% 
+  rename(diff_freq = 'colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1))') %>% 
+  mutate(freq1 = colSums(LOF_mut_t_filtered[response$response == 1, ]/sum(response$response == 1)),
+         freq0 = colSums(LOF_mut_t_filtered[response$response == 0, ]/sum(response$response == 0)))
+
+
+LOF_data
+
+
+common_LOF_res_non_res[common_LOF_res_non_res$diff_freq > 0.11,]
+
+write.table(common_LOF_res_non_res$gene,"./tmp/common_LOF_res_non_res.csv")
+
+
+row_mww_wilcox <- function(x) {
+  subtype <- x[response$response == 1]
+  rest <- x[!response$response == 1]
+  res <- wilcox.test(subtype, rest)
+  return(res$p.value)
+}
+
+wilcox_teston_lof <- apply(LOF_mut,1,row_mww_wilcox)
+dim(wilcox_teston_lof)
+response$response
+
+View(head(LOF_mut_t))
+
+
+dim(LOF_mut_t_filtered)
+heatmap(LOF_mut_t_filtered)
+hclust(dist(LOF_mut_t_filtered))
+
+clustering_LOF_filtered <- hclust(dist(LOF_mut_t_filtered))
+plot(clustering_LOF_filtered)
+heatmap(LOF_mut_t_filtered)
+
+mad_values <- apply(tpm_ensg, 1, mad)
+mad_tpm_ensg <- tpm_ensg[order(mad_values)[1:5000], ]
+# mad_tpm_ensg <- tpm_ensg[mad_values > 1.696, ]
+
+
+mad_values_df %>% 
+  rownames_to_column(.)  %>% 
+  filter(mad_values > 0) %>% 
+  ggplot(.,aes(x=log10(mad_values))) + geom_density() + geom_vline(xintercept = 1.696, linetype="dotted", 
+                                                                   color = "blue")
+
+summary(mad_values_df)
+clustering_mad_tpm <- hclust(dist(t(mad_tpm_ensg)))
+plot(clustering_mad_tpm)

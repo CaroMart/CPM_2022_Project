@@ -102,7 +102,6 @@ plot(clusters)
 summary(res_MFA_fosmp)
 
 ## Manually define two clusters and outliers
-
 cluster1 <- c("MM909_43", "MM909_15", "MM909_16", "MM909_35", "MM909_31", "MM909_27")
 cluster2 <- c("MM909_42", "MM909_02", "MM909_37", "MM909_46", "MM909_25", "MM909_11", "MM909_40", "MM909_36", "MM909_34", "MM909_14", "MM909_47")
 outliers <- c("MM909_26", "MM909_06")
