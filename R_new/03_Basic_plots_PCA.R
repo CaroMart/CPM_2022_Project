@@ -10,7 +10,13 @@ library(tidyverse)
 # Response
 response_char <- response %>% 
   mutate(response = case_when(response == 1 ~ "Response",
-                              response == 0 ~ "No Response"))
+                              response == 0 ~ "No Response"),
+         response_RECIST = case_when(RECIST == "CR" ~ "Response",
+                                     RECIST == "PR" ~ "Response",
+                                     RECIST == "SD" ~ "No Response",
+                                     RECIST == "PD" ~ "No Response"))
+
+
 response_dist <- response_char %>% 
   ggplot(mapping = aes(x = response,
                        fill = response)) +
@@ -106,7 +112,7 @@ ggsave(
 #-------------------------------------------------------------------------------
 # PCA
 
-# tpm
+# tpm (Kører på RECIST)
 pca_tpm <- prcomp(t(tpm_ensg))
 
 pca_tpm %>% broom::tidy(matrix = "eigenvalues")
@@ -116,7 +122,7 @@ pca_tpm_plot <- pca_tpm %>%
   ggplot(mapping = aes(
     x = .fittedPC1,
     y = .fittedPC2,
-    color = response)) + 
+    color = response_RECIST)) + 
   geom_point() + 
   theme_minimal() +
   labs(title = "PCA for tpm",
@@ -124,6 +130,7 @@ pca_tpm_plot <- pca_tpm %>%
        y = "PC2 [29.4%]") +
   stat_ellipse()
 
+pca_tpm_plot
 ggsave(
   filename = "03_PCA_tpm.png",
   plot = pca_tpm_plot,
