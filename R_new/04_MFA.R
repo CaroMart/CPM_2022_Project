@@ -97,7 +97,7 @@ response$response
 PC_matrix_fosmp
 heatmap(PC_matrix_fosmp$coord)
 clusters = hclust(d=dist(PC_matrix_fosmp$coord))
-clusters$labels <- response$response
+clusters$labels <- response$RECIST[!(rownames(PC_matrix_df) %in% fosmp)]
 plot(clusters)
 summary(res_MFA_fosmp)
 
