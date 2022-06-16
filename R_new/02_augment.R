@@ -1,6 +1,7 @@
+library('tidyverse')
 library("MCPcounter")
 
-x$
+####### TPM data ####### 
 estimate_output <- myEstimateFunction(tpm_ensg)
 MCP_output <- MCPcounter.estimate(tpm_ensg,featuresType = "HUGO_symbols")
 MCP_output
@@ -35,6 +36,7 @@ grouped_data_sample_tidy <- tpm_ensg_t_grouped_data %>%
 
 ggplot(data = estimate_output, aes(x=ESTIMATEScore)) + geom_histogram()
 
-grouped_data_sample_tidy
 
-max(estimate_output$TumorPurity)
+####### LOF data ####### 
+
+
