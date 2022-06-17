@@ -55,8 +55,8 @@ ggsave(
 
 # Mut load
 Mut_load_dens <- response %>% 
-  ggplot(mapping = aes(x = mut_load)) +
-  geom_density() + 
+  ggplot(mapping = aes(x = mut_load,group = factor(response) ,fill=factor(response))) +
+  geom_histogram() + 
   theme_minimal() +
   labs(title = "Mutational load pr. patient")
 

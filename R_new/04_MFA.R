@@ -27,8 +27,12 @@ MCP_transposed <- tibble::rownames_to_column(MCP_transposed, "patient")
 mad_tpm_ensg_transposed <- as.data.frame(t(mad_tpm_ensg))
 mad_tpm_ensg_transposed <- tibble::rownames_to_column(mad_tpm_ensg_transposed, "patient")
 
-LOF_transposed <- as.data.frame(t(LOF_mut))
+LOF_transposed <- as.data.frame(LOF_mut_t_filtered)
 LOF_transposed <- tibble::rownames_to_column(LOF_transposed, "patient")
+dim(LOF_transposed)
+as_tibble(LOF_transposed)
+
+dim(LOF_transposed)
 
 estimate_output <- tibble::rownames_to_column(estimate_output, "patient")
 
@@ -42,15 +46,21 @@ estimate_output <- tibble::rownames_to_column(estimate_output, "patient")
 data_factominer <- MCP_transposed %>%
   left_join(mad_tpm_ensg_transposed, by = "patient") %>%
   left_join(LOF_transposed, by = "patient") %>%
-  left_join(purity_corrected_tpm, by = "patient") %>% 
+  # left_join(purity_corrected_tpm, by = "patient") %>% 
   left_join(response[,c("patient", "mut_load")], by = "patient") %>%
   cbind(., purity_scores) %>%
   column_to_rownames(., var = "patient")
 
+dim(LOF_transposed)
+
+as_tibble(LOF_transposed)
+
+LOF_transposed
+
 ## MFA ##
 dim(data_factominer)
-res_MFA <- MFA(data_factominer, group=c(10,5000,3468,5000,1,1), type=c(rep("c", 6)),
-           ncp=20, name.group=c("MCP_count","mad_tpm_ensg","LOF","purity_corrected_tpm","TMB", "purity_score"))
+res_MFA <- MFA(data_factominer, group=c(10,5000,667,1,1), type=c(rep("c", 5)),
+           ncp=20, name.group=c("MCP_count","mad_tpm_ensg","LOF","TMB", "purity_score"))
 
 ## Plotting result
 PC_matrix <- res_MFA$ind
@@ -61,8 +71,8 @@ ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = response$response)) +
   stat_ellipse()
 
 fosmp = c()
-fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.1>(3),]))
-fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.2>2.5,]))
+fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.1>(2.5),]))
+fosmp = c(fosmp, rownames(PC_matrix_df[PC_matrix_df$Dim.2>4,]))
 
 fosmp
 

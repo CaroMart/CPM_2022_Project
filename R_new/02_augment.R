@@ -58,10 +58,30 @@ grouped_data_sample_tidy <- tpm_ensg_t_grouped_data %>%
 ggplot(data = estimate_output, aes(x=ESTIMATEScore)) + geom_histogram()
 
 
+
+mad_values <- apply(tpm_ensg, 1, mad)
+# mad_tpm_ensg <- tpm_ensg[order(mad_values)[1:5000], ]
+mad_tpm_ensg <- tpm_ensg[mad_values > 1.696, ]
+
+
+mad_values_df %>% 
+  rownames_to_column(.)  %>% 
+  filter(mad_values > 0) %>% 
+  ggplot(.,aes(x=log10(mad_values))) + geom_density() + geom_vline(xintercept = 1.696, linetype="dotted", 
+                                                                   color = "blue")
+
+summary(mad_values_df)
+clustering_mad_tpm <- hclust(dist(t(mad_tpm_ensg)))
+plot(clustering_mad_tpm)
+
+
 ####### LOF data ####### 
 LOF_mut_t <- t(LOF_mut)
-LOF_mut_t_filtered <- LOF_mut_t[,colSums(LOF_mut_t) > 0]
-
+LOF_mut_t_filtered <- LOF_mut_t[,colSums(LOF_mut_t) > 1]
+dim(LOF_mut_t_filtered)
+clustering_LOF_filtered <- hclust(dist(LOF_mut_t_filtered))
+plot(clustering_LOF_filtered)
+heatmap(LOF_mut_t_filtered)
 
 LOF_sums_0 <- as.data.frame(colSums(LOF_mut_t_filtered[response$response == 0,]/sum(response$response == 0)))
 names(LOF_sums_0)
@@ -152,23 +172,5 @@ View(head(LOF_mut_t))
 
 dim(LOF_mut_t_filtered)
 heatmap(LOF_mut_t_filtered)
-hclust(dist(LOF_mut_t_filtered))
-
-clustering_LOF_filtered <- hclust(dist(LOF_mut_t_filtered))
-plot(clustering_LOF_filtered)
-heatmap(LOF_mut_t_filtered)
-
-mad_values <- apply(tpm_ensg, 1, mad)
-mad_tpm_ensg <- tpm_ensg[order(mad_values)[1:5000], ]
-# mad_tpm_ensg <- tpm_ensg[mad_values > 1.696, ]
 
 
-mad_values_df %>% 
-  rownames_to_column(.)  %>% 
-  filter(mad_values > 0) %>% 
-  ggplot(.,aes(x=log10(mad_values))) + geom_density() + geom_vline(xintercept = 1.696, linetype="dotted", 
-                                                                   color = "blue")
-
-summary(mad_values_df)
-clustering_mad_tpm <- hclust(dist(t(mad_tpm_ensg)))
-plot(clustering_mad_tpm)

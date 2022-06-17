@@ -9,10 +9,10 @@ download.file(
 )
 
 ## Methylation
-download.file(
-  url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.methylation450.tsv.gz",
-  destfile = "data/_raw/TCGA-SKCM.methylation450.tsv.gz"
-)
+# download.file(
+#   url = "https://gdc-hub.s3.us-east-1.amazonaws.com/download/TCGA-SKCM.methylation450.tsv.gz",
+#   destfile = "data/_raw/TCGA-SKCM.methylation450.tsv.gz"
+# )
 
 ## Counts
 download.file(

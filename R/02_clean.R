@@ -7,12 +7,22 @@ snvs <- snvs_raw %>%
   filter(filter == "PASS",
          !grepl("synonymous_variant", effect))
 
-snvs[rev(order(snvs$dna_vaf)),]
 
 gene_lengths = read_delim(file = "data/gene_lengths.txt", delim = " ", col_names = c("gene", "length"))
 gene_lengths
 
-max(gene_lengths$length)
+
+
+snv_summary_w_length = snvs %>% 
+  group_by(Sample_ID, gene) %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>%
+  pivot_wider(names_from = Sample_ID,
+              values_from = count) %>% 
+  mutate_all(replace(., is.na(.), 0))
+
+
+max(snv_summary_w_length)
 
 snv_summary_w_length = snvs %>% 
   group_by(Sample_ID, gene) %>% 
