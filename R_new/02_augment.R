@@ -1,10 +1,16 @@
-library('tidyverse')
+# DATA AUGMENTATION
+
+#-------------------------------------------------------------------------------
+# Load Libraries
 library("MCPcounter")
 library("tidyverse")
 
 source("R_new/estimate_function.R")
+source("R_new/LARS_estimate_function.R")
 
+#-------------------------------------------------------------------------------
 ####### TPM data ####### 
+estimate_output_lars <- LARSEstimateFunction(tpm_ensg)
 estimate_output <- myEstimateFunction(tpm_ensg)
 MCP_output <- MCPcounter.estimate(tpm_ensg,featuresType = "HUGO_symbols")
 MCP_output
@@ -74,7 +80,7 @@ summary(mad_values_df)
 clustering_mad_tpm <- hclust(dist(t(mad_tpm_ensg)))
 plot(clustering_mad_tpm)
 
-
+#-------------------------------------------------------------------------------
 ####### LOF data ####### 
 LOF_mut_t <- t(LOF_mut)
 LOF_mut_t_filtered <- LOF_mut_t[,colSums(LOF_mut_t) > 1]
@@ -173,4 +179,13 @@ View(head(LOF_mut_t))
 dim(LOF_mut_t_filtered)
 heatmap(LOF_mut_t_filtered)
 
+#-------------------------------------------------------------------------------
+####### Response data ####### 
 
+response_char <- response %>% 
+  mutate(response = case_when(response == 1 ~ "Response",
+                              response == 0 ~ "No Response"),
+         response_RECIST = case_when(RECIST == "CR" ~ "Response",
+                                     RECIST == "PR" ~ "Response",
+                                     RECIST == "SD" ~ "No Response",
+                                     RECIST == "PD" ~ "No Response"))

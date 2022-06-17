@@ -8,15 +8,6 @@ library(tidyverse)
 # Basic Plots
 
 # Response
-response_char <- response %>% 
-  mutate(response = case_when(response == 1 ~ "Response",
-                              response == 0 ~ "No Response"),
-         response_RECIST = case_when(RECIST == "CR" ~ "Response",
-                                     RECIST == "PR" ~ "Response",
-                                     RECIST == "SD" ~ "No Response",
-                                     RECIST == "PD" ~ "No Response"))
-
-
 response_dist <- response_char %>% 
   ggplot(mapping = aes(x = response,
                        fill = response)) +
@@ -36,14 +27,16 @@ ggsave(
 )
 
 # Purity
-TumorPurity_dens <- estimate_output %>% 
-  ggplot(mapping = aes(x = TumorPurity)) +
-  geom_density() +
+TumorPurity_dens <- estimate_output_lars %>% 
+  ggplot(mapping = aes(x = TumorPurity,
+                       fill = "blue")) +
+  geom_histogram(bins = 10) +
   theme_minimal() +
+  theme(legend.position = "none") +
   labs(title = "Tumor Purity")
 
 ggsave(
-  filename = "03_TumorPurity_dens.png",
+  filename = "03_TumorPurity.png",
   plot = TumorPurity_dens,
   path = "results/",
   scale = 1,
@@ -53,7 +46,7 @@ ggsave(
   dpi = 300
 )
 
-# Mut load
+# Mut load (LIGEGYLDIGT)
 Mut_load_dens <- response %>% 
   ggplot(mapping = aes(x = mut_load,group = factor(response) ,fill=factor(response))) +
   geom_histogram() + 
@@ -72,10 +65,12 @@ ggsave(
 )
 
 # Purity for non-responders and responders
-Purity_respond_dens <- estimate_output %>% 
-  ggplot(mapping = aes(x = TumorPurity)) +
-  geom_density() +
+Purity_respond_dens <- estimate_output_lars %>% 
+  ggplot(mapping = aes(x = TumorPurity,
+                       fill = "blue")) +
+  geom_histogram(bins = 15, color = "black") +
   theme_minimal() +
+  theme(legend.position = "none") +
   facet_wrap(~response_char$response) +
   labs(title = "Tumor purity stratified on responders vs. non-responders")
 
@@ -92,11 +87,14 @@ ggsave(
 
 # Mut_load for non-responders and responders
 Mut_load_respond_dens <- response_char %>% 
-  ggplot(mapping = aes(x = mut_load)) +
-  geom_density() +
+  ggplot(mapping = aes(x = mut_load,
+                       fill = "blue")) +
+  geom_histogram(bins = 10, color = "black") +
   theme_minimal() +
+  theme(legend.position = "none") +
   facet_wrap(~response) +
-  labs(title = "Mut_load")
+  labs(title = "Tumor Mutational Burden",
+       x = "Tumor Mutational Burden (TMB)")
 
 ggsave(
   filename = "03_Mut_load_respond_dens.png",
