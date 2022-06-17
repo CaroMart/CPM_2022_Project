@@ -11,7 +11,7 @@ library(tidyverse)
 response_dist <- response_char %>% 
   ggplot(mapping = aes(x = response,
                        fill = response)) +
-  geom_bar() +
+  geom_bar(color = "black") +
   theme_minimal() +
   labs(title = "Distribution of response vs. no response")
 
@@ -110,17 +110,21 @@ ggsave(
 #-------------------------------------------------------------------------------
 # PCA
 
-# tpm (Kører på RECIST)
+# tpm
 pca_tpm <- prcomp(t(tpm_ensg))
 
 pca_tpm %>% broom::tidy(matrix = "eigenvalues")
+
+ct <- hclust(dist(pca_tpm$x))
+
+plot(ct)
 
 pca_tpm_plot <- pca_tpm %>% 
   broom::augment((response_char)) %>% 
   ggplot(mapping = aes(
     x = .fittedPC1,
     y = .fittedPC2,
-    color = response_RECIST)) + 
+    color = response)) + 
   geom_point() + 
   theme_minimal() +
   labs(title = "PCA for tpm",
@@ -139,6 +143,53 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+# Outlier analysis
+pca_tpm$rotation %>%
+  as.data.frame() %>% 
+  ggplot(aes(x = log10(PC1))) +
+  geom_histogram()
+
+tpm_PC1 <- as.data.frame(pca_tpm$rotation[,2])
+
+cdotpro <- apply(tpm_ensg,2, function(x) {x*tpm_PC1})
+
+cdotpro <- as.data.frame(cdotpro)
+
+colnames(cdotpro) <- colnames(tpm_ensg)
+
+
+rownames(cdotpro$`pca_tpm$rotation[, 1]`)[order(abs(cdotpro$`pca_tpm$rotation[, 1]`), decreasing = TRUE)]
+
+mean_expr_no <- cdotpro %>% 
+  rownames_to_column("gene") %>% 
+  select(-c("MM909_14","MM909_22","MM909_26")) %>%
+  pivot_longer(!gene, names_to = "patients", values_to = "score") %>% 
+  group_by(gene) %>% 
+  summarise(mean_ = mean(score))
+
+cdotpro %>% 
+  rownames_to_column("gene") %>% 
+  select(c("MM909_14","MM909_22","MM909_26")) %>%
+  mutate(across(-matches("gene"),~. -mean_expr_no$mean_)) %>% 
+  mutate(gene = mean_expr_no$gene) %>% 
+  pivot_longer(!gene, names_to = "outlier", values_to = "score") %>% 
+  ggplot(aes(x = log10(score), color = outlier)) + geom_density()
+
+o <- c("MM909_14","MM909_22","MM909_26")
+
+cdotpro %>% 
+  rownames_to_column("gene") %>%
+  pivot_longer(!gene, names_to = "patients", values_to = "score") %>%
+  mutate(abs_val = abs(score)) %>% 
+  mutate(outlier = case_when(patients %in% o ~ 1,
+                   !(patients %in% o) ~ 0)) %>% 
+  filter(abs_val>1) %>% 
+  ggplot(aes(x = log10(abs_val), 
+             group = factor(outlier), 
+             color = factor(outlier))) 
++ geom_density()
+
 
 # estimate output
 pca_estimate <- prcomp(estimate_output)
@@ -236,4 +287,3 @@ ggsave(
   dpi = 300
 )
 #-------------------------------------------------------------------------------
-
