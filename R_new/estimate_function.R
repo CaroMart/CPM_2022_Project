@@ -98,7 +98,7 @@ myEstimateFunction <- function(
   
   convert_row_estimate_score_to_tumor_purity <- function(x) {
     stopifnot(is.numeric(x))
-    cos(0.6049872018 + 0.0001467884 * x/(23729.752/6579.6))
+    cos(0.6049872018 + 0.0001467884 * (x-(18723-(-61.39))))
   }
   est.new <- NULL
   for (i in 1:length(estimate.score)) {

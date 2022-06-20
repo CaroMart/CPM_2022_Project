@@ -11,9 +11,18 @@ source("R_new/LARS_estimate_function.R")
 #-------------------------------------------------------------------------------
 ####### TPM data ####### 
 estimate_output_lars <- LARSEstimateFunction(tpm_ensg)
+ggplot(estimate_output_lars,aes(x=ESTIMATEScore, y=TumorPurity)) + geom_point()
+summary(estimate_output_lars$ESTIMATEScore)
+
 estimate_output <- myEstimateFunction(tpm_ensg)
+
+hist(estimate_output$TumorPurity)
+
 MCP_output <- MCPcounter.estimate(tpm_ensg,featuresType = "HUGO_symbols")
 MCP_output
+
+
+summary(estimate_output$ESTIMATEScore)
 
 ## Fitting linear models to estimate output
 round(estimate_output$TumorPurity, )
