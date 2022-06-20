@@ -1,46 +1,11 @@
 library('tidyverse')
 library("gplots")
 library('pheatmap')
-
-#################### Heat map (3-subtypes) #################### 
-snv_summary_w_length
-columns_of_interest <- c("Sample_ID","NRAS","KRAS","HRAS","BRAF","NF1")
-snv_test <- as.data.frame(snv_summary_count[,columns_of_interest])
-rownames(snv_test) <- snv_test$Sample_ID
-snv_test %>% 
-  as.matrix(.) %>% 
-  pheatmap(., colorRampPalette(c('white','red'))(100), labels_row = rep('',dim(snv_test)[1]))
-
-snv_test %>% 
-  as.matrix(.) %>% 
-  heatmap(.)
-
+library("DESeq2")
 
 #################### Gene enrichment gene-expression #################### 
 # Data filtration
-count_data_raw <- read.csv("./data/_raw/TCGA-SKCM.htseq_counts.tsv.gz",
-                           sep="\t",
-                           fill = 0)
-
-
-count_data <- count_data_raw[,2:473]
-rownames(count_data) <- count_data_raw$Ensembl_ID
-colnames(count_data) <- str_replace_all(colnames(count_data), "\\.", "-")
-
-survival_death <- as.data.frame(survival_filter) 
-survival_death <- survival_death[,-1]
-rownames(survival_death) = survival_filter$sample
-
-
-intersect_patients <- intersect(rownames(survival_death),colnames(count_data))
-
-survival_death <- survival_death[intersect_patients,]$OS
-count_data <- count_data[,intersect_patients]
-
-
-mel_expr_cpm <- apply(count_data, 
-                      2, 
-                      function(x) x/sum(x)*1000000)
+survival_death <- survival_filter$OS
 
 # Finding enriched genes
 
@@ -48,28 +13,78 @@ mel_expr_cpm <- apply(count_data,
 gene_signatures <- list()
 # Make a function to do a MWW U test
 row_mww <- function(x) {
-  subtype <- x[survival_death == i]
-  rest <- x[!survival_death == i]
+  subtype <- x[survival_death == 1]
+  rest <- x[!survival_death == 0]
   res <- wilcox.test(subtype, rest)
   return(res$p.value)
 }
 # Make a function to calculate log2 fc
 row_fc <- function(x) {
-  subtype <- x[survival_death == i]
-  rest <- x[!survival_death == i]
+  subtype <- x[survival_death == 1]
+  rest <- x[!survival_death == 0]
   res <- log2(median(subtype)/median(rest))
   return(res)
 }
+dim(mel_cpm)
 
-for (i in c(1)) {
-  pvals <- apply(mel_expr_cpm, 1, FUN = row_mww)
-  padj <- p.adjust(pvals, method = "BY")
-  sig_probes <- rownames(mel_expr_cpm)[padj<0.05]
-  subtype_sig <- mel_expr_cpm[rownames(mel_expr_cpm) %in% sig_probes,]
-  log2fc <- apply(subtype_sig, 1, FUN = row_fc)
-  
-  print(i)
-  print(length(log2fc))
-}
 
-log2fc
+pvals <- apply(mel_cpm, 1, FUN = row_mww)
+
+
+padj <- p.adjust(pvals, method = "BY")
+
+sig_probes <- rownames(mel_cpm)[padj<0.05]
+subtype_sig <- mel_cpm[rownames(mel_cpm) %in% sig_probes,]
+log2fc <- apply(subtype_sig, 1, FUN = row_fc)
+
+
+subtype_sig
+
+survival_filter[,'OS'] <- factor(survival_filter[,'OS'])
+
+dds <- DESeqDataSetFromMatrix(countData = round(as.matrix(mel_counts)),
+                              colData = survival_filter[,-2],
+                              design = ~ OS)
+
+
+dds_analysis <- DESeq(dds)
+dds_analysis
+
+resultsNames(dds_analysis)
+
+
+sorted_padj <- results(dds_analysis,
+                       name = "OS_1_vs_0"
+) %>%
+  as.data.frame() %>%
+  mutate(Significance = case_when(
+    padj <= 0.05 ~ "Significant",
+    padj > 0.05 ~ "Not significant"
+  )) %>%
+  drop_na(
+    padj,
+    log2FoldChange
+  ) %>%
+  arrange(., padj)
+
+significant_genes <- sorted_padj[sorted_padj$Significance == "Significant",]
+
+significant_genes <- rownames(significant_genes[abs(significant_genes$log2FoldChange) > 0.5,])
+significant_genes
+
+
+mel_cpm_sig <- mel_cpm[rownames(mel_cpm) %in% significant_genes,]
+
+pca <- prcomp(t(mel_cpm_sig))
+
+pca %>% broom::tidy(matrix = "eigenvalues")
+
+
+pca %>% broom::augment((survival_filter)) %>% 
+  ggplot(mapping = aes(
+    x = .fittedPC1,
+    y = .fittedPC2,
+    color = factor(OS))) + # Skal farves på survival
+  geom_point() + 
+  stat_ellipse()
+

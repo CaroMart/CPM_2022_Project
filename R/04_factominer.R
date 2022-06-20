@@ -3,196 +3,130 @@ library("missMDA")
 library("tidyverse")
 
 
-# ncp is eqivalent to number of PC's in a PCA
-# num.group.sup can be used to indicate which groups should NOT be included in MFA
-
-# data("wine")
-# dim(wine)
-# res <- MFA(wine, group=c(2,5,3,10,9,2), type=c("n",rep("s",5)),
-#            ncp=5, name.group=c("orig","olf","vis","olfag","gust","ens"),
-#            num.group.sup=c(1,6))
-# summary(res)
-# barplot(res$eig[,1],main="Eigenvalues",names.arg=1:nrow(res$eig))
-# 
-# res$global.pca
-# 
-# data(orange)
-# res.impute <- imputeMFA(orange, group=c(5,3), type=rep("s",2),ncp=2)
-# summary(res.impute)
-# res.impute$completeObs
-# res.mfa <- MFA(res.impute$completeObs,group=c(5,3),type=rep("s",2))
-# summary(res.mfa)
-# barplot(res.mfa$eig[,1],main="Eigenvalues",names.arg=1:nrow(res.mfa$eig))
-
-
-data(wine)
-hierar <- list(c(2,5,3,10,9,2), c(4,2))
-res.hmfa <- HMFA(wine, H = hierar, type=c("n",rep("s",5)), graph = TRUE)
 
 #### Testing factoMineR on small dataframe ####
 
-## Creating small dataframe
-## Only keeping samples for which we have survival data 
-# snv_summary
-# snv_summary_df <- as.data.frame(snv_summary)
-# rownames(snv_summary_df) <- snv_summary_df$name
-# 
-# snv_summary_df <- snv_summary_df[,2:1000]
-# snv_summary_df_sample <- snv_summary_df
-# 
-# dim(snv_summary_df_sample)
-# 
-# 
-# res <- MFA(snv_summary_df_sample, group=c(499,), type=c("s"),
-#            ncp=5, name.group=c("snv"))
-#snv_summary
+snv_summary_binary_t <- as.data.frame(t(snv_summary_binary))
 
-snvs_factominer_test <- snv_summary %>%
-  mutate(sample = name) %>%
-  select(-name) %>%
-  inner_join(survival_filter[1], by = "sample")
+survival_filter_tibble <- survival_filter %>% 
+  rownames_to_column('sample')
+  
+
+
+snvs_factominer_test <- snv_summary_binary_t[,differential_snvs] %>%
+  rownames_to_column('sample') %>% 
+  as_tibble(.)
+
 
 cnvs_factominer_test <- cnv_summary %>%
-  inner_join(survival_filter[1], by = "sample")
+  rownames_to_column('sample')
 
-mel_expr_cpm_t <- t(mel_expr_cpm)
-mel_expr_cpm_t <- as.data.frame(mel_expr_cpm_t)
-mel_expr_cpm_t <- str_replace_all(rownames(mel_expr_cpm_t), "\\.", "-")
 
-rownames(mel_expr_cpm_t) <- (str_replace_all(rownames(mel_expr_cpm_t), "\\.", "-"))
+pheno_filter_categorical <- pheno_filter_categorical %>%
+  rownames_to_column('sample') %>% 
+  as_tibble(.)
+
+pheno_filter_numeric <- pheno_filter_numeric %>%
+  rownames_to_column('sample')
+
+estimate_output_test <- estimate_output %>%
+  rownames_to_column('sample') %>% 
+  dplyr::select(c('sample','TumorPurity'))
+
+
+
+MCP_output <- t(MCP_output)
+MCP_output <- as.data.frame(MCP_output)
+MCP_output <- MCP_output %>% 
+  rownames_to_column('sample') %>% 
+  as_tibble(.)
+  
+
+mel_cpm
+mel_expr_cpm_t <- as.data.frame(t(mel_cpm))
+mel_expr_cpm_t <- mel_expr_cpm_t[,significant_genes]
+dim(mel_expr_cpm_t)
 mel_expr_cpm_t
+expr_mad_tibble <- mel_expr_cpm_t %>% 
+  rownames_to_column('sample')
 
 
-expr_mad_t <- t(expr_mad)
-colnames(expr_mad_t) <- gene_names_mad
-View(head(expr_mad_t))
-expr_mad_t <- as.data.frame(expr_mad_t)
-rownames(expr_mad_t) <- str_replace_all(rownames(expr_mad_t), "\\.", "-")
-View(head(expr_mad_t))
-
-
-expr_mad_tibble <- as.tibble(expr_mad_t) %>% 
-  mutate(sample = rownames(expr_mad_t))
-expr_mad_tibble
-
-pheno_factominer_test <- pheno_data_filtered %>% 
-  mutate(sample = submitter_id.samples) %>%
-  select(sample, 
-         ethnicity.demographic,
-         gender.demographic,
-         race.demographic,
-         year_of_birth.demographic,
-         primary_diagnosis.diagnoses,
-         prior_malignancy.diagnoses,
-         prior_treatment.diagnoses,
-         tumor_stage.diagnoses,
-         name.tissue_source_site) %>%
-  inner_join(survival_filter[1], by = "sample")
-
-data_factominer_test <- cnvs_factominer_test %>% 
-  inner_join(snvs_factominer_test, by = "sample") %>%
-  inner_join(pheno_factominer_test, by = "sample") %>%
-  inner_join(expr_mad_tibble, by = "sample") %>%
-  column_to_rownames(., var = "sample") %>%
-  drop_na() %>%
-  mutate_at(vars(ethnicity.demographic,
-                 gender.demographic,
-                 race.demographic,
-                 year_of_birth.demographic,
-                 primary_diagnosis.diagnoses,
-                 prior_malignancy.diagnoses,
-                 prior_treatment.diagnoses,
-                 tumor_stage.diagnoses,
-                 name.tissue_source_site), factor)
-
-data_factominer_test
-
-dim(data_factominer_test)
-
-dim(expr_mad_tibble)
-
-dim(data_factominer_test)
-
-
-### running imputation to fill out e.g. BMI 
-#res.impute <- imputeMFA(data_factominer_test,  group=c(46,19210,9), type=c(rep("s",2), "n"),ncp=5)
-
-res <- MFA(data_factominer_test, group=c(46,19210,9,5000), type=c(rep("s",2), "n","s"),
-    ncp=5, name.group=c("cnv","snv","pheno","gene_expr"))
-
-summary(res)
-PC_matrix <- res$ind
-PC_matrix_df <- as.data.frame(PC_matrix$coord)
-
-
-pheno_data_filtered_subset <- pheno_data_filtered[pheno_data_filtered$submitter_id.samples %in% rownames(PC_matrix_df),]
-rownames(pheno_data_filtered_subset) <- pheno_data_filtered_subset$submitter_id.samples
-pheno_data_filtered_subset <- pheno_data_filtered_subset[rownames(PC_matrix_df),]
-pheno_data_filtered_subset
-PC_matrix_df$feature_pheno <- pheno_data_filtered_subset$age_at_initial_pathologic_diagnosis
-
-survival_df <- as.data.frame(survival)
-rownames(survival_df) <- survival_df$sample
-survival_df <- survival_df[,-1]
-survival_subset <- survival_df[rownames(PC_matrix_df),]
-PC_matrix_df$feature_survival <- survival_subset$OS
-
-
-ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(feature_survival))) + 
-  geom_point() + 
-  stat_ellipse()
+pheno_factominer_test <- pheno %>% 
+  rownames_to_column('sample') 
 
 
 ## Running MFA for real 
 
 ## The data frames - put in clean or augment
-samples_in_all_data <- cnv_summary_filter %>% 
-  inner_join(snv_summary_filter, by = "sample") %>%
-  inner_join(pheno_filter_categorical, by = "sample") %>%
-  inner_join(pheno_filter_numeric, by = "sample") %>%
-  inner_join(expr_mad_tibble, by = "sample") %>%
-  select(sample)
 
-impute_data_numeric <- cnv_summary_filter %>% 
-  inner_join(snv_summary_filter, by = "sample") %>%
+samples_in_all_data <- as.data.frame(intersect_patients)
+samples_in_all_data
+colnames(samples_in_all_data) <- c('sample')
+samples_in_all_data <- as_tibble(samples_in_all_data)
+samples_in_all_data
+
+impute_data_numeric <-  cnvs_factominer_test %>% 
+  inner_join(snvs_factominer_test, by = "sample") %>%
   inner_join(pheno_filter_numeric, by = "sample") %>%
   inner_join(expr_mad_tibble, by = "sample") %>%
-  filter(sample %in% samples_in_all_data$sample) %>%
+  inner_join(estimate_output_test, by = "sample") %>%
   column_to_rownames(., var = "sample")
 
+dim(snvs_factominer_test)
+dim(estimate_output_test)
+dim(impute_data_numeric)
 
 impute_data_categorical <- pheno_filter_categorical %>%
-  filter(sample %in% samples_in_all_data$sample) %>%
   column_to_rownames(., var = "sample")  
 
-survival_of_351 <- samples_in_all_data %>% left_join(survival_filter, by = "sample")
-  
+survival_of_351 <- samples_in_all_data %>% 
+  left_join(survival_filter_tibble, by = "sample")
+dim(survival_of_351)
 ## Imputing NA values for continuous values 
 # should continuous variables be s or c? (that is, are they scaled or not). 
 # impute seems to only work when they are c
-res.imputeMFA <- imputeMFA(impute_data_numeric,group=c(46,19210,8,5000), type=c("c","c","c","c"),ncp=2)
+dim(expr_mad_tibble)
+
+
+dim(impute_data_numeric)
+
+
+
+# res.imputeMFA <- imputeMFA(impute_data_numeric,group=c(46,13317,8,136), type=c("c","c","c","c"),ncp=2)
+res.imputeMFA <- imputeMFA(impute_data_numeric,group=c(46,6517,8,136,1), type=c("c","c","c","c","c"),ncp=2)
 res.imputeMCA <- imputeMCA(impute_data_categorical, ncp=2)
 dim(res.imputeMFA$completeObs)
 dim(res.imputeMCA$completeObs)
 
+
+
 data_factominer <- samples_in_all_data %>%
   bind_cols(res.imputeMCA$completeObs) %>%
-  bind_cols(res.imputeMFA$completeObs) %>%
-  column_to_rownames(., var = "sample")  
+  bind_cols(res.imputeMFA$completeObs) 
+
+dim(res.imputeMFA$completeObs)
+
+data_factominer <- data_factominer %>% 
+  as_tibble() %>% 
+  column_to_rownames('sample')
+
+dim(data_factominer)
 
 ## Running MFA
 
-res <- MFA(data_factominer, group=c(16,46,19210,8,5000), type=c("n","s","s","s","s"),
-           ncp=5, name.group=c("pheno_cat","cnv","snv","pheno_num","gene_expr"))
+# res <- MFA(data_factominer, group=c(16,46,13317,8,60488), type=c("n","s","s","s","s"),
+#            ncp=5, name.group=c("pheno_cat","cnv","snv","pheno_num","gene_expr"),graph = FALSE)
+res <- MFA(data_factominer, group=c(16,46,6517,8,136,1), type=c("n","s","s","s","s","s"),
+           ncp=5, name.group=c("pheno_cat","cnv","snv","pheno_num","gene_expr","purity"))
 
+saveRDS(res, file = "/tmp/res_object_sig_snv_sig_gene_purity.rds")
 ## Running HMFA
 
-res <- HMFA(data_factominer)
-
+summary(res)
 ## Plotting result
 PC_matrix <- res$ind
 PC_matrix_df <- as.data.frame(PC_matrix$coord)
 
-ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = survival_of_351$OS)) + 
+ggplot(PC_matrix_df,aes(x=Dim.1, y=Dim.2, color = factor(survival_of_351$OS))) + 
   geom_point() + 
   stat_ellipse()
