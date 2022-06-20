@@ -115,9 +115,6 @@ pca_tpm <- prcomp(t(tpm_ensg))
 
 pca_tpm %>% broom::tidy(matrix = "eigenvalues")
 
-ct <- hclust(dist(pca_tpm$x))
-
-plot(ct)
 
 pca_tpm_plot <- pca_tpm %>% 
   broom::augment((response_char)) %>% 
@@ -150,6 +147,10 @@ pca_tpm$rotation %>%
   ggplot(aes(x = log10(PC1))) +
   geom_histogram()
 
+ct <- hclust(dist(pca_tpm$x))
+
+plot(ct)
+
 tpm_PC1 <- as.data.frame(pca_tpm$rotation[,2])
 
 cdotpro <- apply(tpm_ensg,2, function(x) {x*tpm_PC1})
@@ -178,6 +179,9 @@ cdotpro %>%
 
 o <- c("MM909_14","MM909_22","MM909_26")
 
+
+colorforfun <- c("lightpink" , "lightpink","lightpink","lightpink","black","lightpink","lightpink","lightpink","black", "lightpink","black","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink","lightpink")
+
 cdotpro %>% 
   rownames_to_column("gene") %>%
   pivot_longer(!gene, names_to = "patients", values_to = "score") %>%
@@ -186,9 +190,10 @@ cdotpro %>%
                    !(patients %in% o) ~ 0)) %>% 
   filter(abs_val>1) %>% 
   ggplot(aes(x = log10(abs_val), 
-             group = factor(outlier), 
-             color = factor(outlier))) 
-+ geom_density()
+             color = patients)) +
+  geom_density() +
+  theme_minimal() +
+  scale_color_manual(values = colorforfun)
 
 
 # estimate output
