@@ -27,13 +27,17 @@ ggsave(
 )
 
 # Purity
-TumorPurity_dens <- estimate_output_lars %>% 
+TumorPurity_dens <- estimate_output %>% 
   ggplot(mapping = aes(x = TumorPurity,
                        fill = "blue")) +
-  geom_histogram(bins = 10) +
+  geom_density(bw = 0.03) +
   theme_minimal() +
   theme(legend.position = "none") +
+  xlab("Tumor Purity") +
+  ylab("Density") + 
   labs(title = "Tumor Purity")
+
+TumorPurity_dens
 
 ggsave(
   filename = "03_TumorPurity.png",
@@ -65,7 +69,33 @@ ggsave(
 )
 
 # Purity for non-responders and responders
-Purity_respond_dens <- estimate_output_lars %>% 
+library("ggpubr")
+
+
+# bleu: #53BCC2
+# rot: #E87E72
+
+dim(estimate_output)
+
+estimate_response <- estimate_output %>% 
+  rownames_to_column() %>% 
+  inner_join(response_char, by = c("rowname" = "patient")) %>% 
+  mutate(response = case_when(response == "Response" ~ "Response (n=10)",
+                              response == "No Response" ~ "No Response (n=12)"))
+
+p <- ggboxplot(estimate_response, x = "response", y = "TumorPurity",
+               color = "response", palette = c("#E87E72", "#53BCC2"),
+               add = "jitter")
+#  Add p-value
+p + stat_compare_means()
+
+p <- ggboxplot(estimate_response, x = "response", y = "mut_load",
+               color = "response", palette = c("#E87E72", "#53BCC2"),
+               add = "jitter", xlab = "Response to ACT", ylab = "Tumor mutational burden")
+#  Add p-value
+ggpar(p, legend.title = "Response", legend = "none") + stat_compare_means()
+
+Purity_respond_dens <- estimate_output %>% 
   ggplot(mapping = aes(x = TumorPurity,
                        fill = "blue")) +
   geom_histogram(bins = 15, color = "black") +
@@ -84,6 +114,52 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+grouped_data_sample_tidy_beta <- tpm_ensg_t_grouped_data %>% 
+  mutate(tidy = map(mdl, function(x) {broom::tidy(x)[2,]})) %>% 
+  unnest(tidy)
+
+grouped_data_sample_tidy_beta %>% top_n(10, -p.value)
+grouped_data_sample_tidy_beta %>% filter(estimate > 0) %>% top_n(10, -p.value)
+
+one_gene_glm_model = tpm_ensg_t_grouped_data_calc %>% filter(genes == "MLANA") %>% pluck(3) %>% .[[1]]
+one_gene_data = tpm_ensg_t_grouped_data_calc %>% filter(genes == "MLANA") %>% pluck(2) %>% .[[1]]
+
+one_gene_data %>% ggplot(mapping = aes(x = purity, y = counts, fill = "MLANA")) +
+  geom_point() +
+  geom_smooth(method = "glm", col = "red", se = FALSE) +
+  geom_hline(yintercept = sum(one_gene_glm_model$coef), linetype="dashed") +
+  theme_minimal() + 
+  xlab("Purity") +
+  ylab("Transcripts per million of MLANA") + 
+  labs(fill = "Gene GLM") +
+  theme(legend.position = "bottom")
+
+one_gene_glm_model = tpm_ensg_t_grouped_data_calc %>% filter(genes == "PLAGL1") %>% pluck(3) %>% .[[1]]
+one_gene_data = tpm_ensg_t_grouped_data_calc %>% filter(genes == "PLAGL1") %>% pluck(2) %>% .[[1]]
+
+one_gene_data %>% ggplot(mapping = aes(x = purity, y = counts, fill = "PLAGL1")) +
+  geom_point() +
+  geom_smooth(method = "glm", col = "red", se = FALSE) +
+  geom_hline(yintercept = sum(one_gene_glm_model$coef), linetype="dashed") +
+  theme_minimal() + 
+  xlab("Purity") +
+  ylab("Transcripts per million of PLAGL1") + 
+  labs(fill = "Gene GLM") +
+  theme(legend.position = "bottom")
+
+one_gene_glm_model = tpm_ensg_t_grouped_data_calc %>% filter(genes == "CARD11") %>% pluck(3) %>% .[[1]]
+one_gene_data = tpm_ensg_t_grouped_data_calc %>% filter(genes == "CARD11") %>% pluck(2) %>% .[[1]]
+
+one_gene_data %>% ggplot(mapping = aes(x = purity, y = counts, fill = "CARD11")) +
+  geom_point() +
+  geom_smooth(method = "glm", col = "red", se = FALSE) +
+  geom_hline(yintercept = sum(one_gene_glm_model$coef), linetype="dashed") +
+  theme_minimal() + 
+  xlab("Purity") +
+  ylab("Transcripts per million of CARD11") + 
+  labs(fill = "Gene GLM") +
+  theme(legend.position = "bottom")
 
 # Mut_load for non-responders and responders
 Mut_load_respond_dens <- response_char %>% 
@@ -268,6 +344,20 @@ ggsave(
 )
 
 # MCP counter
+
+MCP_output %>% t %>% 
+  as.data.frame %>% 
+  rownames_to_column %>% 
+  left_join((response_char %>% select(patient, response)), by = c("rowname" = "patient")) %>% 
+  pivot_longer(-c(rowname, response)) %>% 
+  mutate(value = log(value))%>% 
+  ggplot(mapping = aes(x = name, y = value, color=response, group=rowname)) +
+    geom_line() +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ylab("log(MCP-counter)") +
+    xlab("Cell type") +
+    labs(color="Patient")
 
 #Removing _026, as it is an outlier
 MCP_output_pca <- MCP_output %>% 
