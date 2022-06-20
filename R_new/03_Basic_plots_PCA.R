@@ -136,12 +136,13 @@ pca_tpm_plot <- pca_tpm %>%
     color = response)) + 
   geom_point() + 
   theme_minimal() +
-  labs(title = "PCA for tpm",
+  labs(title = "PCA for transcript pr. million data",
        x = "PC1 [42%]",
        y = "PC2 [29.4%]") +
   stat_ellipse()
 
 pca_tpm_plot
+
 ggsave(
   filename = "03_PCA_tpm.png",
   plot = pca_tpm_plot,
@@ -158,6 +159,8 @@ pca_tpm$rotation %>%
   as.data.frame() %>% 
   ggplot(aes(x = log10(PC1))) +
   geom_histogram()
+
+pca_tpm$x
 
 ct <- hclust(dist(pca_tpm$x))
 
@@ -209,7 +212,7 @@ cdotpro %>%
 
 
 # estimate output
-pca_estimate <- prcomp(estimate_output)
+pca_estimate <- prcomp(estimate_output_lars)
 
 pca_estimate %>% broom::tidy(matrix = "eigenvalues")
 
@@ -226,6 +229,8 @@ pca_estimate_plot <- pca_estimate %>%
        y = "PC2 [2.8%]") +
   stat_ellipse()
 
+pca_estimate_plot
+
 ggsave(
   filename = "03_PCA_estimate.png",
   plot = pca_estimate_plot,
@@ -236,6 +241,8 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+pca_estimate$x
 
 # LOF
 
@@ -251,10 +258,12 @@ PCA_LOF_plot <- pca_LOF %>%
     color = response)) + 
   geom_point() + 
   theme_minimal() +
-  labs(title = "PCA for LOF",
+  labs(title = "PCA for loss of function data",
        x = "PC1 [19.9%]",
        y = "PC2 [16.5%]") +
   stat_ellipse()
+
+PCA_LOF_plot
 
 ggsave(
   filename = "03_PCA_LOF.png",
@@ -266,6 +275,13 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
+# Outlier Analysis
+ct <- hclust(dist(pca_LOF$x))
+
+plot(ct)
+
+pca_LOF$x
 
 # MCP counter
 
@@ -293,6 +309,8 @@ pca_MCP_plot <- pca_MCP %>%
        y = "PC2 [%]") +
   stat_ellipse()
 
+pca_MCP_plot
+
 ggsave(
   filename = "03_PCA_MCP.png",
   plot = pca_MCP_plot,
@@ -303,4 +321,5 @@ ggsave(
   units = "in",
   dpi = 300
 )
+
 #-------------------------------------------------------------------------------
