@@ -89,12 +89,24 @@ ggsave(
 Mut_load_respond_dens <- response_char %>% 
   ggplot(mapping = aes(x = mut_load,
                        fill = "blue")) +
-  geom_histogram(bins = 10, color = "black") +
+  geom_boxplot(color = "black") +
   theme_minimal() +
   theme(legend.position = "none") +
   facet_wrap(~response) +
   labs(title = "Tumor Mutational Burden",
        x = "Tumor Mutational Burden (TMB)")
+
+# Same men som boxplot, skal laves som specielt boxplot
+Mut_load_respond_dens <- response_char %>% 
+  ggplot(mapping = aes(x = response,
+                       y = mut_load)) +
+  geom_boxplot(color = "black", fill = "#e87e72") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Tumor Mutational Burden",
+       y = "Tumor Mutational Burden (TMB)")
+
+Mut_load_respond_dens
 
 ggsave(
   filename = "03_Mut_load_respond_dens.png",
